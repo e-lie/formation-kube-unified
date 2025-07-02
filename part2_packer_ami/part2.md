@@ -188,4 +188,6 @@ Puis se connecter avec :
 ssh root@<ip publique de la sortie terraform>
 ```
 
-Nous n'arrivons pas à nous connecter parce que l'ip publique 
+Nous n'arrivons pas à nous connecter parce que l'ip publique du serveur n'est pas par défaut accessible de l'extérieur : elle est protégée par un security group : un Security Group AWS est un pare-feu virtuel qui contrôle le trafic réseau vers/depuis les instances EC2.
+
+ Il nous donc le configurer...
