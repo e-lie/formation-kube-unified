@@ -129,9 +129,9 @@ output "web_url" {
 
 ## Nouveaux éléments dans ce projet
 
-### Security Group étendu
+### Réutilisation du Security Group
 
-Le Security Group a été modifié pour autoriser non seulement le SSH (port 22) mais aussi le trafic HTTP (port 80) nécessaire pour accéder au serveur web Nginx. Cette configuration permet aux utilisateurs d'accéder au site web depuis n'importe quelle adresse IP.
+Nous réutilisons le même Security Group que dans la partie 2, qui autorise déjà le SSH (port 22) et le trafic HTTP (port 80). Cette configuration avait été mise en place en prévision de l'installation d'un serveur web.
 
 ### Bloc connection
 

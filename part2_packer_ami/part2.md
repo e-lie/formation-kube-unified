@@ -215,13 +215,20 @@ Pour autoriser l'accès SSH à notre instance, nous devons créer un Security Gr
 Modifiez votre fichier `main.tf` pour ajouter le Security Group avant la ressource instance :
 
 ```hcl
-resource "aws_security_group" "ssh_access" {
-  name        = "ssh-access"
-  description = "Allow SSH access"
+resource "aws_security_group" "web_ssh_access" {
+  name        = "web-ssh-access"
+  description = "Allow SSH and HTTP access"
 
   ingress {
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -234,14 +241,14 @@ resource "aws_security_group" "ssh_access" {
   }
 
   tags = {
-    Name = "SSH Access"
+    Name = "Web and SSH Access"
   }
 }
 
 resource "aws_instance" "web_server" {
   ami                    = data.aws_ami.custom_ubuntu.id
   instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.ssh_access.id]
+  vpc_security_group_ids = [aws_security_group.web_ssh_access.id]
 
   tags = {
     Name = "Custom Ubuntu Server"
@@ -250,7 +257,7 @@ resource "aws_instance" "web_server" {
 }
 ```
 
-Ce Security Group définit une règle d'entrée (`ingress`) qui autorise le trafic TCP sur le port 22 (SSH) depuis n'importe quelle adresse IP (`0.0.0.0/0`). La règle de sortie (`egress`) autorise tout le trafic sortant. L'instance EC2 est maintenant associée à ce Security Group via le paramètre `vpc_security_group_ids`.
+Ce Security Group définit deux règles d'entrée (`ingress`) : une qui autorise le trafic TCP sur le port 22 (SSH) et une autre sur le port 80 (HTTP) depuis n'importe quelle adresse IP (`0.0.0.0/0`). La règle de sortie (`egress`) autorise tout le trafic sortant. L'instance EC2 est maintenant associée à ce Security Group via le paramètre `vpc_security_group_ids`.
 
 ### Application des modifications
 
