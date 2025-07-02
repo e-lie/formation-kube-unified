@@ -194,7 +194,7 @@ Executons et observons le résultat des commandes classiques
 2. `terraform plan` 
 3. `terraform apply`
 
-## Prérequis
-- Terraform installé
-- AWS CLI configuré avec vos credentials
-- Permissions AWS pour créer des instances EC2
+
+Pour vérifier que notre serveur a bien été créé on peut utiliser la CLI: 
+
+`aws ec2 describe-instances --profile votreprenom`
