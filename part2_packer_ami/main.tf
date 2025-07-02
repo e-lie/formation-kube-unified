@@ -18,7 +18,7 @@ data "aws_ami" "custom_ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu-24.04-custom-*"]
+    values = ["ubuntu-22.04-custom-*"]
   }
 
   filter {

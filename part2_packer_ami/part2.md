@@ -174,3 +174,18 @@ output "ami_name" {
 
 La différence principale avec la partie 1 est que le bloc `data "aws_ami"` utilise `owners = ["self"]` pour rechercher uniquement dans vos AMI personnelles au lieu des AMI publiques d'Ubuntu. Le filtre sur le nom correspond au pattern défini dans la configuration Packer.
 
+### Se connecter en SSH a notre serveur
+
+Déverrouillez la clé ssh stagiaire que nous avons mis dans l'AMI avec :
+
+```sh
+ssh-add ~/.ssh/id_stagiaire
+```
+
+Puis se connecter avec :
+
+```sh
+ssh root@<ip publique de la sortie terraform>
+```
+
+Nous n'arrivons pas à nous connecter parce que l'ip publique 

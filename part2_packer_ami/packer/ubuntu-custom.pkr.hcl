@@ -19,7 +19,7 @@ variable "profile" {
 
 data "amazon-ami" "ubuntu" {
   filters = {
-    name                = "ubuntu/images/hvm-ssd/ubuntu-noble-24.04-amd64-server-*"
+    name                = "ubuntu/images/hvm-ssd/ubuntu-*-22.04-amd64-server-*"
     root-device-type    = "ebs"
     virtualization-type = "hvm"
   }
@@ -30,7 +30,7 @@ data "amazon-ami" "ubuntu" {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "ubuntu-24.04-custom-{{timestamp}}"
+  ami_name      = "ubuntu-22.04-custom-{{timestamp}}"
   instance_type = "t2.micro"
   region        = var.region
   profile       = var.profile
