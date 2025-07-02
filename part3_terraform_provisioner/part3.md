@@ -89,7 +89,7 @@ resource "aws_instance" "web_server" {
   connection {
     type        = "ssh"
     user        = "root"
-    private_key = file("~/.ssh/id_stagiaire")
+    private_key = file("~/.ssh/id_terraform")
     host        = self.public_ip
   }
 
@@ -135,7 +135,7 @@ Le Security Group a été modifié pour autoriser non seulement le SSH (port 22)
 
 ### Bloc connection
 
-Le bloc `connection` définit comment Terraform doit se connecter à l'instance pour exécuter les commandes. Il spécifie le type de connexion (SSH), l'utilisateur (root grâce à notre AMI personnalisée), la clé privée à utiliser et l'adresse IP de l'hôte. L'utilisation de `self.public_ip` permet de référencer dynamiquement l'IP publique de l'instance en cours de création.
+Le bloc `connection` définit comment Terraform doit se connecter à l'instance pour exécuter les commandes. Il spécifie le type de connexion (SSH), l'utilisateur (root grâce à notre AMI personnalisée), la clé privée à utiliser (`~/.ssh/id_terraform` générée dans la partie 2) et l'adresse IP de l'hôte. L'utilisation de `self.public_ip` permet de référencer dynamiquement l'IP publique de l'instance en cours de création.
 
 ### Provisioner remote-exec
 

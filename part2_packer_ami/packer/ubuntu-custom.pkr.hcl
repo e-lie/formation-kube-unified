@@ -53,7 +53,7 @@ build {
       "sleep 30",
       "sudo apt-get update",
       "sudo mkdir -p /root/.ssh",
-      "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXHgv6fDeMM/zbqXpzdANeNbltG74+2Q1pBC9CXRc0M root@lxd-remote' | sudo tee /root/.ssh/authorized_keys",
+      "echo '<VOTRE_CLÉ_PUBLIQUE>' | sudo tee /root/.ssh/authorized_keys",
       "sudo chmod 700 /root/.ssh",
       "sudo chmod 600 /root/.ssh/authorized_keys",
       "sudo chown -R root:root /root/.ssh",

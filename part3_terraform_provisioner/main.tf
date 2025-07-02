@@ -65,7 +65,7 @@ resource "aws_instance" "web_server" {
   connection {
     type        = "ssh"
     user        = "root"
-    private_key = file("~/.ssh/id_stagiaire")
+    private_key = file("~/.ssh/id_terraform")
     host        = self.public_ip
   }
 

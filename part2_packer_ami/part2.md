@@ -15,9 +15,31 @@ part2_packer_ami/
 └── part2.md
 ```
 
+## Génération d'une paire de clés SSH
+
+Avant de créer notre AMI personnalisée, nous devons générer une paire de clés SSH qui sera utilisée pour l'accès à nos serveurs. Cette clé sera intégrée dans l'AMI et permettra une connexion sécurisée sans mot de passe.
+
+### Création de la clé SSH
+
+Générez une nouvelle paire de clés SSH sans phrase de passe avec la commande suivante :
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/id_terraform -N ""
+```
+
+Cette commande crée deux fichiers :
+- `~/.ssh/id_terraform` : la clé privée (à garder secrète)
+- `~/.ssh/id_terraform.pub` : la clé publique (à intégrer dans l'AMI)
+
+Affichez le contenu de la clé publique pour l'utiliser dans Packer :
+
+```bash
+cat ~/.ssh/id_terraform.pub
+```
+
 ## Création de l'AMI avec Packer
 
-Packer est un outil open-source qui permet de créer des images de machines automatiquement à partir d'une configuration déclarative. Dans cette partie nous allons créer une AMI Ubuntu 24.04 personnalisée avec une clé SSH publique pré-installée.
+Packer est un outil open-source qui permet de créer des images de machines automatiquement à partir d'une configuration déclarative. Dans cette partie nous allons créer une AMI Ubuntu 22.04 personnalisée avec notre clé SSH publique pré-installée.
 
 ### Configuration Packer
 
@@ -79,7 +101,7 @@ build {
       "sleep 30",
       "sudo apt-get update",
       "sudo mkdir -p /root/.ssh",
-      "echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBXHgv6fDeMM/zbqXpzdANeNbltG74+2Q1pBC9CXRc0M root@lxd-remote' | sudo tee /root/.ssh/authorized_keys",
+      "echo '<VOTRE_CLÉ_PUBLIQUE>' | sudo tee /root/.ssh/authorized_keys",
       "sudo chmod 700 /root/.ssh",
       "sudo chmod 600 /root/.ssh/authorized_keys",
       "sudo chown -R root:root /root/.ssh",
@@ -89,7 +111,7 @@ build {
 }
 ```
 
-Ce fichier définit le plugin Amazon nécessaire, les variables de configuration (région et profil AWS), la recherche de l'AMI Ubuntu 24.04 de base, la configuration de construction et les commandes à exécuter pour personnaliser l'image (ajout de la clé SSH).
+Ce fichier définit le plugin Amazon nécessaire, les variables de configuration (région et profil AWS), la recherche de l'AMI Ubuntu 22.04 de base, la configuration de construction et les commandes à exécuter pour personnaliser l'image. Remplacez `<VOTRE_CLÉ_PUBLIQUE>` par le contenu de votre fichier `~/.ssh/id_terraform.pub` obtenu précédemment.
 
 ### Construction de l'AMI
 
@@ -174,18 +196,12 @@ output "ami_name" {
 
 La différence principale avec la partie 1 est que le bloc `data "aws_ami"` utilise `owners = ["self"]` pour rechercher uniquement dans vos AMI personnelles au lieu des AMI publiques d'Ubuntu. Le filtre sur le nom correspond au pattern défini dans la configuration Packer.
 
-### Se connecter en SSH a notre serveur
+### Se connecter en SSH à notre serveur
 
-Déverrouillez la clé ssh stagiaire que nous avons mis dans l'AMI avec :
-
-```sh
-ssh-add ~/.ssh/id_stagiaire
-```
-
-Puis se connecter avec :
+Pour vous connecter à l'instance, utilisez la clé privée que nous avons générée :
 
 ```sh
-ssh root@<ip publique de la sortie terraform>
+ssh -i ~/.ssh/id_terraform root@<ip publique de la sortie terraform>
 ```
 
 Nous n'arrivons pas à nous connecter parce que l'instance EC2 n'a pas de règles de sécurité réseau autorisant l'accès SSH. Un Security Group AWS est un pare-feu virtuel qui contrôle le trafic réseau entrant et sortant des instances EC2.
