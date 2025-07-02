@@ -188,6 +188,61 @@ Puis se connecter avec :
 ssh root@<ip publique de la sortie terraform>
 ```
 
-Nous n'arrivons pas à nous connecter parce que l'ip publique du serveur n'est pas par défaut accessible de l'extérieur : elle est protégée par un security group : un Security Group AWS est un pare-feu virtuel qui contrôle le trafic réseau vers/depuis les instances EC2.
+Nous n'arrivons pas à nous connecter parce que l'instance EC2 n'a pas de règles de sécurité réseau autorisant l'accès SSH. Un Security Group AWS est un pare-feu virtuel qui contrôle le trafic réseau entrant et sortant des instances EC2.
 
- Il nous donc le configurer...
+## Configuration du Security Group
+
+Pour autoriser l'accès SSH à notre instance, nous devons créer un Security Group avec les règles appropriées et l'associer à notre instance EC2.
+
+### Ajout du Security Group au fichier main.tf
+
+Modifiez votre fichier `main.tf` pour ajouter le Security Group avant la ressource instance :
+
+```hcl
+resource "aws_security_group" "ssh_access" {
+  name        = "ssh-access"
+  description = "Allow SSH access"
+
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "SSH Access"
+  }
+}
+
+resource "aws_instance" "web_server" {
+  ami                    = data.aws_ami.custom_ubuntu.id
+  instance_type          = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.ssh_access.id]
+
+  tags = {
+    Name = "Custom Ubuntu Server"
+    Type = "Packer-built"
+  }
+}
+```
+
+Ce Security Group définit une règle d'entrée (`ingress`) qui autorise le trafic TCP sur le port 22 (SSH) depuis n'importe quelle adresse IP (`0.0.0.0/0`). La règle de sortie (`egress`) autorise tout le trafic sortant. L'instance EC2 est maintenant associée à ce Security Group via le paramètre `vpc_security_group_ids`.
+
+### Application des modifications
+
+Après avoir modifié le fichier, appliquez les changements avec :
+
+```bash
+terraform plan
+terraform apply
+```
+
+Terraform va créer le Security Group et modifier l'instance pour l'y associer. Une fois l'application terminée, vous devriez pouvoir vous connecter en SSH à votre instance.
