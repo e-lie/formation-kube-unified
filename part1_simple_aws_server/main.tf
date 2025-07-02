@@ -8,7 +8,8 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region  = "eu-west-3" # DC de paris
+  profile = "<tfuser>"
 }
 
 resource "aws_instance" "web_server" {
@@ -27,7 +28,7 @@ data "aws_ami" "ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-22.04-amd64-server-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-*-22.04-amd64-server-*"]
   }
 
   filter {
