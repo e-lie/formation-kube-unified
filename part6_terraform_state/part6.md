@@ -74,70 +74,67 @@ Le fichier d'état contient plusieurs éléments clés. La `version` indique le 
 # terraform state replace-provider hashicorp/aws registry.terraform.io/hashicorp/aws
 ```
 
-## Workspaces et gestion multi-environnements
+## Workspaces : cas d'usage et limitations
 
-Les workspaces permettent de gérer plusieurs environnements (dev, staging, prod) avec le même code. Chaque workspace maintient son propre fichier d'état indépendant.
+Les workspaces Terraform permettent de créer plusieurs instances isolées d'une même configuration, chacune avec son propre fichier d'état. Contrairement à une idée répandue, ils ne sont pas la solution idéale pour séparer des environnements critiques comme production et développement.
 
-### Création et gestion des workspaces
+### Comprendre les workspaces
 
-Explorons les commandes de base des workspaces :
+Par défaut, Terraform utilise un workspace nommé "default" :
 
 ```bash
 # Voir le workspace actuel
 terraform workspace show
 
+# Créer et sélectionner un nouveau workspace
+terraform workspace new feature-test
+terraform workspace select feature-test
+
 # Lister tous les workspaces
 terraform workspace list
-
-# Créer un nouveau workspace
-terraform workspace new dev
-terraform workspace new staging
-
-# Changer de workspace
-terraform workspace select dev
 ```
 
-### Configuration avec des fichiers de variables
+Chaque workspace possède son propre fichier d'état, stocké dans le même backend mais dans des chemins séparés.
 
-Pour gérer différents environnements, créez des fichiers de variables spécifiques. D'abord, ajoutez la variable `environment` dans votre `variables.tf` :
+### Cas d'usage appropriés pour les workspaces
+
+Les workspaces sont particulièrement adaptés pour :
+
+**Tests de branches de fonctionnalités** : Déployer temporairement une branche pour tests sans impacter l'environnement principal de développement.
+
+**Déploiements multi-régions** : Déployer la même application dans plusieurs régions AWS avec des variations mineures.
+
+**Environnements temporaires** : Créer des environnements éphémères pour des démonstrations ou des tests de charge.
+
+**Variantes d'une même application** : Déployer plusieurs versions d'une application dans le même environnement (par exemple, différentes configurations pour différents clients).
+
+### Exemple pratique : déploiements de fonctionnalités
+
+Créons un exemple où les workspaces sont utilisés pour tester différentes branches. D'abord, ajoutez une variable pour identifier la fonctionnalité :
 
 ```coffee
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
+variable "feature_name" {
+  description = "Name of the feature being tested"
   type        = string
-  default     = "dev"
+  default     = "main"
 }
 ```
 
-Créez ensuite un fichier `dev.tfvars` pour l'environnement de développement :
+Créez un fichier `feature-a.tfvars` pour une fonctionnalité spécifique :
 
 ```coffee
 aws_region           = "eu-west-3"
 aws_profile          = "laptop"
-vpc_cidr             = "10.0.0.0/16"
-public_subnet_cidr   = "10.0.1.0/24"
+vpc_cidr             = "10.100.0.0/16"
+public_subnet_cidr   = "10.100.1.0/24"
 instance_type        = "t2.micro"
 ssh_key_path         = "~/.ssh/id_terraform"
-environment          = "dev"
+feature_name         = "feature-payment-api"
 ```
 
-Et un fichier `staging.tfvars` pour l'environnement de staging :
+### Utilisation avec terraform.workspace
 
-```coffee
-aws_region           = "eu-west-3"
-aws_profile          = "laptop"
-vpc_cidr             = "10.1.0.0/16"
-public_subnet_cidr   = "10.1.1.0/24"
-instance_type        = "t3.small"
-ssh_key_path         = "~/.ssh/id_terraform"
-environment          = "staging"
-```
-
-Notez les différences entre les environnements : des plages CIDR distinctes (10.0.x.x vs 10.1.x.x) et des types d'instances différents (t2.micro vs t3.small).
-
-### Modification des ressources pour supporter les environnements
-
-Modifiez vos ressources pour inclure l'environnement dans les noms et tags. Dans `vpc.tf` :
+Terraform expose le nom du workspace actuel via `terraform.workspace`. Modifiez vos ressources pour l'utiliser. Dans `vpc.tf` :
 
 ```coffee
 resource "aws_vpc" "main" {
@@ -145,11 +142,19 @@ resource "aws_vpc" "main" {
   # ...
 
   tags = {
-    Name        = "${var.environment}-vpc"
-    Environment = var.environment
+    Name      = "${terraform.workspace}-vpc"
+    Workspace = terraform.workspace
+    Feature   = var.feature_name
   }
 }
 
+# Security Group avec nom unique par workspace
+resource "aws_security_group" "web_ssh_access" {
+  name        = "${terraform.workspace}-web-ssh-access"
+  description = "Allow SSH and HTTP access for ${terraform.workspace}"
+  vpc_id      = aws_vpc.main.id
+  # ...
+}
 ```
 
 Et dans `webserver.tf` :
@@ -164,51 +169,91 @@ resource "aws_instance" "web_server" {
       "apt-get install -y nginx",
       "systemctl start nginx",
       "systemctl enable nginx",
-      "echo '<h1>Hello from ${var.environment}!</h1>' > /var/www/html/index.html",
-      "echo 'Nginx installed in ${var.environment} environment'"
+      "echo '<h1>Feature: ${var.feature_name} (${terraform.workspace})</h1>' > /var/www/html/index.html"
     ]
   }
 
   tags = {
-    Name        = "${var.environment}-web-server"
-    Environment = var.environment
+    Name      = "${terraform.workspace}-web-server"
+    Workspace = terraform.workspace
+    Feature   = var.feature_name
   }
 }
 ```
 
-### Déploiement des différents environnements
+### Déploiement de branches de fonctionnalités
 
 ```bash
-# Déploiement environnement dev
-terraform workspace select dev
-terraform plan -var-file="dev.tfvars" -out=dev.tfplan
-terraform apply dev.tfplan
+# Déploiement de la branche feature-payment
+terraform workspace new feature-payment
+terraform plan -var-file="feature-a.tfvars" -out=feature.tfplan
+terraform apply feature.tfplan
 
-# Déploiement environnement staging
-terraform workspace select staging
-terraform plan -var-file="staging.tfvars" -out=staging.tfplan
-terraform apply staging.tfplan
+# Retour au workspace principal
+terraform workspace select default
 
-# Vérification des états séparés
-terraform workspace select dev
-terraform state list
-
-terraform workspace select staging
-terraform state list
+# Nettoyage après les tests
+terraform workspace select feature-payment
+terraform destroy -var-file="feature-a.tfvars"
+terraform workspace select default
+terraform workspace delete feature-payment
 ```
 
-Vous avez maintenant deux infrastructures indépendantes avec des CIDRs différents et des tailles d'instances différentes.
+### Limitations des workspaces pour les environnements
+
+Les workspaces présentent des limitations importantes pour la séparation d'environnements critiques :
+
+**Même backend partagé** : Tous les workspaces utilisent le même backend S3, donc les mêmes permissions d'accès. Impossible d'isoler réellement production et développement.
+
+**Manque de visibilité** : Le workspace actuel n'est pas visible dans le code. Un `terraform destroy` accidentel dans le mauvais workspace peut avoir des conséquences catastrophiques.
+
+**Risque d'erreurs humaines** : Facile d'oublier dans quel workspace on se trouve et d'appliquer des changements au mauvais endroit.
+
+**Pas de séparation des pipelines** : Impossible d'avoir des processus CI/CD différents par workspace.
+
+### Alternative recommandée pour les environnements
+
+Pour une vraie séparation dev/staging/prod, privilégiez :
+
+```
+# Structure de répertoires séparés
+terraform-infra/
+├── environments/
+│   ├── dev/
+│   │   ├── main.tf
+│   │   ├── backend.tf  # Backend S3 différent
+│   │   └── terraform.tfvars
+│   ├── staging/
+│   │   ├── main.tf
+│   │   ├── backend.tf  # Backend S3 différent
+│   │   └── terraform.tfvars
+│   └── prod/
+│       ├── main.tf
+│       ├── backend.tf  # Backend S3 différent
+│       └── terraform.tfvars
+└── modules/
+    ├── vpc/
+    └── webserver/
+```
+
+Cette approche offre une vraie isolation avec des backends séparés, des permissions différentes et des pipelines CI/CD distincts.
 
 ### Gestion des états par workspace
 
-Chaque workspace maintient son propre fichier d'état :
+Chaque workspace maintient son propre fichier d'état. Pour un backend local :
 
 ```bash
 # Les états sont stockés dans
-# terraform.tfstate.d/dev/terraform.tfstate
-# terraform.tfstate.d/staging/terraform.tfstate
+# terraform.tfstate.d/feature-payment/terraform.tfstate
+# terraform.tfstate.d/feature-auth/terraform.tfstate
 
 ls -la terraform.tfstate.d/
+```
+
+Pour un backend S3, les états sont organisés avec le préfixe `env:` :
+```
+s3://bucket-name/env:/feature-payment/path/to/state
+s3://bucket-name/env:/feature-auth/path/to/state
 ```
 
 ## Backend distant avec S3
@@ -411,6 +456,12 @@ Pour la **maintenance**, surveillez la taille des fichiers d'état, nettoyez ré
 
 ## Conclusion
 
-Cette partie vous a montré comment maîtriser la gestion de l'état Terraform, utiliser les workspaces pour des environnements multiples, et configurer un backend distant sécurisé. Ces compétences sont essentielles pour utiliser Terraform en production et en équipe.
+Cette partie vous a montré comment maîtriser la gestion de l'état Terraform et configurer un backend distant sécurisé. Nous avons exploré les workspaces en détaillant leurs cas d'usage appropriés (tests de fonctionnalités, déploiements temporaires) et leurs limitations pour la séparation d'environnements critiques.
 
-Dans la partie suivante, nous utiliserons ces bases solides pour créer une architecture VPC multi-AZ plus complexe et hautement disponible.
+Points clés à retenir :
+- L'état Terraform est le cœur de votre infrastructure et doit être protégé
+- Les workspaces sont utiles pour des variations temporaires, pas pour isoler prod/dev
+- Un backend S3 avec verrouillage DynamoDB est essentiel pour le travail en équipe
+- Pour de vrais environnements séparés, utilisez des répertoires et backends distincts
+
+Dans la partie suivante, nous utiliserons ces bases solides pour créer une architecture VPC multi-AZ complexe et hautement disponible.
