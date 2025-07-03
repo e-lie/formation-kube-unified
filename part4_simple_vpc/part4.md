@@ -25,7 +25,7 @@ Nous allons construire notre infrastructure bloc par bloc pour bien comprendre c
 
 ### Étape 1 : Création du VPC de base
 
-Commencez par reprendre la partie 3 (en ayant commité le résultat). Modifiez le fichier `main.tf` et ajoutez le bloc VPC :
+Partez du code de la partie 3 (copiez le dossier part3 vers part4 ou commitez les changements de part3 et créez une nouvelle branche). Ajoutez le bloc VPC au début de votre fichier `main.tf` :
 
 ```coffee
 # VPC
@@ -114,17 +114,18 @@ resource "aws_route_table_association" "public" {
 
 Cette association indique que le trafic du subnet public doit utiliser la table de routage publique pour déterminer sa destination.
 
-### Security Group
+### Modification du Security Group
 
-Ajoutez le Security Group pour contrôler l'accès réseau :
+Le Security Group de la partie 3 doit être légèrement modifié pour fonctionner dans notre VPC personnalisé. Modifiez le bloc Security Group existant en ajoutant simplement le paramètre `vpc_id` :
 
-```hcl
-# Security Group
+```coffee
+# Security Group - modification de la partie 3
 resource "aws_security_group" "web_ssh_access" {
   name        = "web-ssh-access"
   description = "Allow SSH and HTTP access"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = aws_vpc.main.id  # <-- Ligne ajoutée pour le VPC personnalisé
 
+  # Le reste reste identique à la partie 3
   ingress {
     from_port   = 22
     to_port     = 22
@@ -152,20 +153,21 @@ resource "aws_security_group" "web_ssh_access" {
 }
 ```
 
-Notez que le Security Group doit spécifier `vpc_id` car il sera créé dans notre VPC personnalisé et non dans le VPC par défaut. Les règles sont identiques à celles des parties précédentes.
+La seule différence avec la partie 3 est l'ajout de `vpc_id = aws_vpc.main.id` qui indique que ce Security Group appartient à notre VPC personnalisé et non au VPC par défaut d'AWS.
 
-### Étape 8 : Instance EC2
+### Modification de l'instance EC2
 
-Finalement, ajoutez l'instance EC2 avec le provisioner Nginx :
+L'instance EC2 de la partie 3 doit être modifiée pour fonctionner dans notre VPC personnalisé. Modifiez le bloc d'instance existant en ajoutant le paramètre `subnet_id` :
 
-```hcl
-# Instance EC2
+```coffee
+# Instance EC2 - modification de la partie 3
 resource "aws_instance" "web_server" {
   ami                    = data.aws_ami.custom_ubuntu.id
   instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.public.id
+  subnet_id              = aws_subnet.public.id  # <-- Ligne ajoutée pour placer l'instance dans notre subnet
   vpc_security_group_ids = [aws_security_group.web_ssh_access.id]
 
+  # Le reste reste identique à la partie 3
   connection {
     type        = "ssh"
     user        = "root"
@@ -190,13 +192,13 @@ resource "aws_instance" "web_server" {
 }
 ```
 
-L'instance spécifie maintenant explicitement `subnet_id` pour la placer dans notre subnet public personnalisé. Le provisioner installe Nginx comme dans la partie 3.
+La principale différence avec la partie 3 est l'ajout de `subnet_id = aws_subnet.public.id` qui place explicitement l'instance dans notre subnet public personnalisé au lieu du subnet par défaut d'AWS.
 
-### Étape 9 : Outputs
+### Outputs
 
 Ajoutez les outputs pour afficher les informations importantes :
 
-```hcl
+```coffee
 # Outputs
 output "vpc_id" {
   value = aws_vpc.main.id
@@ -221,26 +223,29 @@ output "web_url" {
 
 Ces outputs vous permettent de voir les IDs des ressources créées et l'URL pour accéder au serveur web.
 
-## Déploiement et vérification
-
-Déployez l'infrastructure avec les commandes habituelles :
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-Une fois le déploiement terminé, vous pouvez accéder au serveur web via l'URL affichée dans les outputs. La page affichera "Hello from VPC!" confirmant que le serveur fonctionne dans votre VPC personnalisé.
-
-## Différences avec le VPC par défaut
+### Différences avec le VPC par défaut
 
 Notre VPC personnalisé diffère du VPC par défaut sur plusieurs points importants. Nous contrôlons entièrement la configuration réseau, nous définissons nos propres plages IP et nous créons explicitement tous les composants (IGW, subnets, route tables). Cela nous donne une meilleure visibilité et un contrôle total sur l'architecture.
 
-## Bonnes pratiques VPC
 
-Lors de la création d'un VPC, choisissez soigneusement votre plage CIDR en évitant les conflits avec d'autres réseaux. Activez toujours les fonctionnalités DNS pour une meilleure connectivité. Documentez votre architecture réseau et utilisez des tags cohérents pour faciliter la gestion.
+## Déploiement et vérification
 
-## Conclusion
+Déployez l'infrastructure en utilisant une approche plus sécurisée avec le paramètre `-out` :
 
-Cette introduction aux VPC vous a montré comment créer une architecture réseau personnalisée sur AWS. Dans la partie suivante, nous étendrons cette base pour créer une architecture multi-AZ avec subnets privés et NAT Gateways pour une haute disponibilité et une sécurité renforcée.
+```bash
+terraform init
+terraform plan -out=tfplan
+terraform apply tfplan
+```
+
+### Pourquoi utiliser `-out` avec terraform plan ?
+
+Le paramètre `-out` de `terraform plan` est une bonne pratique importante pour plusieurs raisons :
+
+**Sécurité et cohérence** : Il garantit que les modifications appliquées avec `terraform apply` correspondent exactement à ce qui a été planifié et validé. Sans ce paramètre, il pourrait y avoir des différences entre ce que vous avez vu dans le plan et ce qui est réellement appliqué si des changements ont eu lieu entre les deux commandes.
+
+**Environnements de production** : Dans un environnement de production ou dans un pipeline CI/CD, cette approche est essentielle. Elle permet de valider le plan dans une étape séparée (review, approbation) avant l'application effective des changements.
+
+**Audit et traçabilité** : Le fichier de plan peut être conservé comme trace de ce qui a été appliqué à un moment donné, facilitant les audits et le debugging.
+
+Une fois le déploiement terminé, vous pouvez accéder au serveur web via l'URL affichée dans les outputs. La page affichera "Hello from VPC!" confirmant que le serveur fonctionne dans votre VPC personnalisé.
