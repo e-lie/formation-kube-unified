@@ -314,7 +314,9 @@ Un backend distant permet le partage sécurisé de l'état entre plusieurs utili
 
 ### Création de l'infrastructure backend
 
-Créez d'abord les ressources AWS nécessaires avec un fichier temporaire `backend-setup.tf` :
+**⚠️ Important :** Le backend S3 doit être créé séparément avant d'être utilisé. Créez d'abord un projet séparé pour le backend.
+
+Dans un dossier `backend_s3/`, créez un fichier `main.tf` dédié uniquement à la création du backend :
 
 ```coffee
 # Bucket S3 pour le state Terraform
@@ -388,25 +390,24 @@ output "dynamodb_table_name" {
 }
 ```
 
-Déployez ces ressources :
+Déployez le backend S3 depuis le dossier `backend_s3/` :
 
 ```bash
-# Renommez temporairement les autres fichiers pour éviter les conflits
-mkdir temp
-mv vpc.tf webserver.tf temp/
-
-# Déployez le backend
+cd backend_s3/
 terraform init
 terraform plan -out=backend.tfplan
 terraform apply backend.tfplan
 
 # Notez le nom du bucket S3 affiché dans les outputs
 terraform output s3_bucket_name
+
+# Revenez au dossier principal
+cd ..
 ```
 
 ### Configuration du backend S3
 
-Créez un fichier `backend.tf` avec la configuration du backend distant :
+Dnas notre projet principal, créez un fichier `backend.tf` avec la configuration du backend distant :
 
 ```coffee
 terraform {
@@ -423,7 +424,7 @@ terraform {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
     key            = "part6/terraform.tfstate"
     region         = "eu-west-3"
-    profile        = "laptop"
+    profile        = "<tfuser>"
     encrypt        = true
     dynamodb_table = "terraform-state-lock"
   }
