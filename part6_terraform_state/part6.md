@@ -5,29 +5,13 @@ weight: 9
 
 Dans cette sixième partie, nous allons explorer en profondeur la gestion de l'état (state) dans Terraform, l'utilisation des workspaces pour gérer plusieurs environnements, et la configuration d'un backend distant pour une collaboration sécurisée.
 
-## Structure du projet à la fin du TP
+## Étude de l'état Terraform
 
-```
-part6_terraform_state/
-├── main.tf                    # Point de départ (copie de part5)
-├── vpc.tf                     # Infrastructure réseau avec variables
-├── webserver.tf               # Instance avec variables
-├── versions.tf                # Contraintes de versions
-├── variables.tf               # Variables d'entrée
-├── dev.tfvars                 # Variables pour environnement dev
-├── staging.tfvars             # Variables pour environnement staging
-├── backend-setup.tf           # Configuration du backend S3
-├── backend.tf                 # Backend distant configuré
-└── part6.md
-```
-
-## Partie 1 : Étude de l'état Terraform
-
-L'état Terraform est un fichier JSON qui maintient la correspondance entre votre configuration et les ressources réelles dans le cloud.
+L'état Terraform est un fichier JSON qui maintient la correspondance entre votre configuration et les ressources réelles dans le cloud. Nous allons explorer cet élément fondamental de Terraform.
 
 ### Analyse du fichier d'état local
 
-Partez du code de la partie 5 et déployez l'infrastructure pour créer un état :
+Partez du code de la partie 5 (copiez le dossier ou commitez les changements). Dans le dossier part6, déployez l'infrastructure pour créer un état :
 
 ```bash
 terraform init
@@ -53,11 +37,7 @@ terraform show
 terraform show -json > state.json
 ```
 
-**Analyse des informations :**
-- Identifiants des ressources (IDs AWS)
-- Métadonnées de création
-- Dépendances entre ressources
-- Attributs sensibles (marqués comme tels)
+Ces commandes permettent d'explorer l'état sans le modifier. Vous y trouverez les identifiants des ressources (IDs AWS), les métadonnées de création, les dépendances entre ressources et les attributs sensibles (marqués comme tels).
 
 ### Lecture directe du fichier terraform.tfstate
 
@@ -74,12 +54,7 @@ cat terraform.tfstate | jq '.resources'
 cat terraform.tfstate | jq '.version'
 ```
 
-**Structure du fichier d'état :**
-- `version` : Version du format de state
-- `terraform_version` : Version de Terraform utilisée
-- `serial` : Numéro de série pour la concurrence
-- `lineage` : UUID unique pour ce state
-- `resources` : Liste des ressources et leurs attributs
+Le fichier d'état contient plusieurs éléments clés. La `version` indique le format du state, `terraform_version` la version de Terraform utilisée, `serial` un numéro pour la gestion de concurrence, `lineage` un UUID unique pour ce state, et `resources` la liste complète des ressources et leurs attributs.
 
 **⚠️ Important :** Ne modifiez jamais directement le fichier d'état. Utilisez toujours les commandes Terraform.
 
@@ -99,11 +74,13 @@ cat terraform.tfstate | jq '.version'
 # terraform state replace-provider hashicorp/aws registry.terraform.io/hashicorp/aws
 ```
 
-## Partie 2 : Workspaces et gestion multi-environnements
+## Workspaces et gestion multi-environnements
 
-Les workspaces permettent de gérer plusieurs environnements (dev, staging, prod) avec le même code.
+Les workspaces permettent de gérer plusieurs environnements (dev, staging, prod) avec le même code. Chaque workspace maintient son propre fichier d'état indépendant.
 
 ### Création et gestion des workspaces
+
+Explorons les commandes de base des workspaces :
 
 ```bash
 # Voir le workspace actuel
@@ -122,10 +99,19 @@ terraform workspace select dev
 
 ### Configuration avec des fichiers de variables
 
-Créez des fichiers de variables pour chaque environnement :
+Pour gérer différents environnements, créez des fichiers de variables spécifiques. D'abord, ajoutez la variable `environment` dans votre `variables.tf` :
 
-**dev.tfvars :**
-```hcl
+```coffee
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+  default     = "dev"
+}
+```
+
+Créez ensuite un fichier `dev.tfvars` pour l'environnement de développement :
+
+```coffee
 aws_region           = "eu-west-3"
 aws_profile          = "laptop"
 vpc_cidr             = "10.0.0.0/16"
@@ -135,8 +121,9 @@ ssh_key_path         = "~/.ssh/id_terraform"
 environment          = "dev"
 ```
 
-**staging.tfvars :**
-```hcl
+Et un fichier `staging.tfvars` pour l'environnement de staging :
+
+```coffee
 aws_region           = "eu-west-3"
 aws_profile          = "laptop"
 vpc_cidr             = "10.1.0.0/16"
@@ -146,22 +133,13 @@ ssh_key_path         = "~/.ssh/id_terraform"
 environment          = "staging"
 ```
 
+Notez les différences entre les environnements : des plages CIDR distinctes (10.0.x.x vs 10.1.x.x) et des types d'instances différents (t2.micro vs t3.small).
+
 ### Modification des ressources pour supporter les environnements
 
-Ajoutez la variable `environment` dans `variables.tf` :
+Modifiez vos ressources pour inclure l'environnement dans les noms et tags. Dans `vpc.tf` :
 
-```hcl
-variable "environment" {
-  description = "Environment name (dev, staging, prod)"
-  type        = string
-  default     = "dev"
-}
-```
-
-Modifiez vos ressources pour inclure l'environnement dans les noms et tags :
-
-```hcl
-# Dans vpc.tf
+```coffee
 resource "aws_vpc" "main" {
   cidr_block = var.vpc_cidr
   # ...
@@ -172,7 +150,11 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Dans webserver.tf
+```
+
+Et dans `webserver.tf` :
+
+```coffee
 resource "aws_instance" "web_server" {
   # ...
   
@@ -215,7 +197,7 @@ terraform workspace select staging
 terraform state list
 ```
 
-**Résultat :** Vous avez maintenant deux infrastructures indépendantes avec des CIDRs différents et des tailles d'instances différentes.
+Vous avez maintenant deux infrastructures indépendantes avec des CIDRs différents et des tailles d'instances différentes.
 
 ### Gestion des états par workspace
 
@@ -229,15 +211,15 @@ Chaque workspace maintient son propre fichier d'état :
 ls -la terraform.tfstate.d/
 ```
 
-## Partie 3 : Backend distant avec S3
+## Backend distant avec S3
 
-Un backend distant permet le partage sécurisé de l'état entre plusieurs utilisateurs et systèmes CI/CD.
+Un backend distant permet le partage sécurisé de l'état entre plusieurs utilisateurs et systèmes CI/CD. Nous allons configurer un backend S3 avec verrouillage DynamoDB.
 
 ### Création de l'infrastructure backend
 
 Créez d'abord les ressources AWS nécessaires avec un fichier temporaire `backend-setup.tf` :
 
-```hcl
+```coffee
 # Bucket S3 pour le state Terraform
 resource "aws_s3_bucket" "terraform_state" {
   bucket = "terraform-state-${random_id.bucket_suffix.hex}"
@@ -329,7 +311,7 @@ terraform output s3_bucket_name
 
 Créez un fichier `backend.tf` avec la configuration du backend distant :
 
-```hcl
+```coffee
 terraform {
   required_version = ">= 1.0"
 
@@ -351,7 +333,7 @@ terraform {
 }
 ```
 
-**Remplacez `<YOUR-BUCKET-NAME>` par le nom réel du bucket créé.**
+Remplacez `<YOUR-BUCKET-NAME>` par le nom réel du bucket créé lors de l'étape précédente.
 
 ### Migration vers le backend distant
 
@@ -384,13 +366,7 @@ aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/env:/staging/part6/
 
 ### Avantages du backend distant
 
-**Collaboration :** Plusieurs développeurs peuvent travailler sur la même infrastructure en partageant l'état.
-
-**Verrouillage :** DynamoDB empêche les modifications simultanées qui pourraient corrompre l'état.
-
-**Sécurité :** L'état est chiffré et versionné dans S3.
-
-**Sauvegarde :** Les versions précédentes de l'état sont conservées automatiquement.
+Le backend distant offre plusieurs avantages essentiels. La **collaboration** permet à plusieurs développeurs de travailler sur la même infrastructure en partageant l'état. Le **verrouillage** via DynamoDB empêche les modifications simultanées qui pourraient corrompre l'état. La **sécurité** est renforcée avec le chiffrement et le versioning dans S3. Enfin, la **sauvegarde** automatique conserve les versions précédentes de l'état.
 
 ### Test du verrouillage
 
@@ -405,7 +381,9 @@ terraform plan -var-file="dev.tfvars"
 # Vous devriez voir un message de verrouillage
 ```
 
-## Commandes de nettoyage
+## Nettoyage et bonnes pratiques
+
+### Commandes de nettoyage
 
 Pour nettoyer les environnements de test :
 
@@ -423,28 +401,13 @@ terraform destroy -var-file="staging.tfvars"
 # terraform destroy
 ```
 
-## Bonnes pratiques de gestion d'état
+### Bonnes pratiques de gestion d'état
 
-### Sécurité
+Pour la **sécurité**, utilisez toujours un backend distant pour les environnements partagés, chiffrez l'état au repos et en transit, limitez l'accès au bucket S3 et à la table DynamoDB, et ne commitez jamais les fichiers d'état dans Git.
 
-- Utilisez toujours un backend distant pour les environnements partagés
-- Chiffrez l'état au repos et en transit
-- Limitez l'accès au bucket S3 et à la table DynamoDB
-- Ne commitez jamais les fichiers d'état dans Git
+Pour l'**organisation**, créez un workspace par environnement (dev, staging, prod), un backend S3 séparé par projet ou équipe, utilisez des préfixes de clés cohérents dans S3 et documentez la structure de vos workspaces.
 
-### Organisation
-
-- Un workspace par environnement (dev, staging, prod)
-- Un backend S3 séparé par projet ou équipe
-- Utilisez des préfixes de clés cohérents dans S3
-- Documentez la structure de vos workspaces
-
-### Maintenance
-
-- Surveillez la taille des fichiers d'état
-- Nettoyez régulièrement les anciens workspaces
-- Sauvegardez les états critiques
-- Testez régulièrement les procédures de restauration
+Pour la **maintenance**, surveillez la taille des fichiers d'état, nettoyez régulièrement les anciens workspaces, sauvegardez les états critiques et testez régulièrement les procédures de restauration.
 
 ## Conclusion
 
