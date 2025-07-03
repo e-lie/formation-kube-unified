@@ -235,10 +235,9 @@ Déployez l'infrastructure en utilisant une approche plus sécurisée avec le pa
 ```bash
 terraform init
 terraform plan -out=tfplan
-terraform apply tfplan
 ```
 
-### Pourquoi utiliser `-out` avec terraform plan ?
+**Pourquoi utiliser `-out` avec terraform plan ?**
 
 Le paramètre `-out` de `terraform plan` est une bonne pratique importante pour plusieurs raisons :
 
@@ -247,5 +246,22 @@ Le paramètre `-out` de `terraform plan` est une bonne pratique importante pour 
 **Environnements de production** : Dans un environnement de production ou dans un pipeline CI/CD, cette approche est essentielle. Elle permet de valider le plan dans une étape séparée (review, approbation) avant l'application effective des changements.
 
 **Audit et traçabilité** : Le fichier de plan peut être conservé comme trace de ce qui a été appliqué à un moment donné, facilitant les audits et le debugging.
+
+
+
+Maintenant nous pouvons réafficher le plan avec `terraform show tfplan`
+
+- Etudiez le diff : `Plan: 7 to add, 0 to change, 2 to destroy.`
+
+Est-ce que notre mise à jour implique de la haute disponibilité ? Pourquoi ?
+
+> La resource aws_instance i.e. notre serveur doit être remplacé par AWS pour pouvoir être connecté au nouveau subnet. Terraform implique de façon générale une vision immutable des serveurs (ils sont jetés et recréés comme des conteneurs). Pour éviter un coupure de service il va nous falloir une architecture HA permettant le remplacement progressif de plusieurs instances.
+
+
+Appliquez enfin les modification avec la commande :
+
+```sh
+terraform apply tfplan
+```
 
 Une fois le déploiement terminé, vous pouvez accéder au serveur web via l'URL affichée dans les outputs. La page affichera "Hello from VPC!" confirmant que le serveur fonctionne dans votre VPC personnalisé.
