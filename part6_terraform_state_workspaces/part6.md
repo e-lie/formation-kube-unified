@@ -257,11 +257,9 @@ Les workspaces présentent des limitations importantes pour la séparation d'env
 
 **Même backend partagé** : Tous les workspaces utilisent le même backend S3, donc les mêmes permissions d'accès. Impossible d'isoler réellement production et développement.
 
-**Manque de visibilité** : Le workspace actuel n'est pas visible dans le code. Un `terraform destroy` accidentel dans le mauvais workspace peut avoir des conséquences catastrophiques.
+**Manque de visibilité et Risque d'erreurs humaines** : Le workspace actuel n'est pas visible dans le code. Un `terraform destroy` ou mauvaise modification dans le mauvais workspace peut avoir des conséquences catastrophiques.
 
-**Risque d'erreurs humaines** : Facile d'oublier dans quel workspace on se trouve et d'appliquer des changements au mauvais endroit.
-
-**Pas de séparation des pipelines** : Impossible d'avoir des processus CI/CD différents par workspace.
+**Pas de séparation des pipelines** : Plus difficile d'avoir des processus CI/CD différents par workspace.
 
 ### Alternative recommandée pour les environnements
 
@@ -288,7 +286,7 @@ terraform-infra/
     └── webserver/
 ```
 
-Cette approche offre une vraie isolation avec des backends séparés, des permissions différentes et des pipelines CI/CD distincts.
+Cette approche offre une vraie isolation avec des backends séparés, des permissions différentes et des pipelines CI/CD distincts. nous verrons cela dans un TP suivant.
 
 ### Gestion des états par workspace
 
@@ -308,9 +306,6 @@ s3://bucket-name/env:/feature-payment/path/to/state
 s3://bucket-name/env:/feature-auth/path/to/state
 ```
 
-## Conclusion
-
-Cette partie vous a montré comment maîtriser la gestion de l'état Terraform et utiliser les workspaces de manière appropriée. Nous avons exploré les workspaces en détaillant leurs cas d'usage appropriés (tests de fonctionnalités, déploiements temporaires) et leurs limitations pour la séparation d'environnements critiques.
 
 Points clés à retenir :
 - L'état Terraform est le cœur de votre infrastructure et doit être protégé

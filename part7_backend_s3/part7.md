@@ -27,7 +27,7 @@ Dans notre projet principal, copiez le contenu de part6 vers part7 :
 cp -r part6_terraform_state/* part7_backend_s3/
 ```
 
-Créez un fichier `backend.tf` avec la configuration du backend distant :
+Créez un fichier `backend.tf` (et supprimez `versions.tf` qui est ici remplacé) avec la configuration du backend distant :
 
 ```coffee
 terraform {
@@ -59,7 +59,7 @@ Avant de migrer, assurez-vous que votre infrastructure backend S3 est déployée
 
 ```bash
 # Vérifiez que le backend S3 existe
-cd ../s3_backend
+cd ../part7_annexe_s3_bucket_creation
 terraform output
 
 # Revenez au dossier part7
@@ -80,14 +80,14 @@ terraform init
 
 ```bash
 # Vérifiez que l'état est maintenant sur S3
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/part7/
+aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive --profile=<votreprenom>
 
 # Vérifiez les workspaces
 terraform workspace list
 
 # Changez de workspace et observez les différents fichiers d'état
-terraform workspace new staging
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/env:/staging/part7/
+terraform workspace new test-s3-lock
+aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive --profile=<votreprenom>
 ```
 
 ### Déploiement avec backend distant
@@ -96,24 +96,24 @@ Déployez votre infrastructure avec le backend S3 :
 
 ```bash
 # Planifiez et appliquez
-terraform plan -var-file="dev.tfvars" -out=tfplan
+terraform plan -out=tfplan
 terraform apply tfplan
 
 # Vérifiez l'état dans S3
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/part7/ --recursive
+aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive --profile=<votreprenom>
 ```
 
-### Avantages du backend distant
+### Avantages du backend distant et collaboration en équipe
 
 Le backend distant offre plusieurs avantages essentiels :
 
-**Collaboration** : Plusieurs développeurs peuvent travailler sur la même infrastructure en partageant l'état, évitant les conflits et les incohérences.
-
-**Verrouillage** : Via DynamoDB, le système empêche les modifications simultanées qui pourraient corrompre l'état. Chaque opération terraform lock l'état pendant son exécution.
-
-**Sécurité** : Le chiffrement au repos et en transit protège les données sensibles. Les versions précédentes de l'état sont conservées pour la récupération.
-
-**Sauvegarde** : S3 offre une durabilité de 99,999999999% et conserve automatiquement les versions précédentes de l'état.
+- **Collaboration** : Plusieurs développeurs peuvent travailler sur la même infrastructure en partageant l'état, évitant les conflits et les incohérences
+- **Verrouillage** : Via DynamoDB, le système empêche les modifications simultanées qui pourraient corrompre l'état. Chaque opération terraform lock l'état pendant son exécution  
+- **Sécurité** : Le chiffrement au repos et en transit protège les données sensibles. Les versions précédentes de l'état sont conservées pour la récupération
+- **Partage d'état** : Tous les membres de l'équipe accèdent au même état centralisé, éliminant les divergences locales
+- **Audit et traçabilité** : S3 conserve l'historique des modifications avec le versioning, permettant de tracer qui a modifié quoi et quand
+- **Sécurité d'accès** : Les permissions IAM contrôlent l'accès au bucket et à la table DynamoDB, permettant une gestion fine des autorisations
+- **Intégration CI/CD** : Les pipelines d'intégration continue peuvent accéder à l'état partagé pour les déploiements automatisés
 
 ### Test du verrouillage
 
@@ -121,10 +121,11 @@ Pour tester le mécanisme de verrouillage, ouvrez deux terminaux :
 
 ```bash
 # Terminal 1 - Lancez une opération longue
-terraform plan -var-file="dev.tfvars"
+terraform worspace list (assurez vous d'etre dans test-s3-lock)
+terraform destroy -auto-approve && terraform apply -auto-approve
 
 # Terminal 2 - Tentez une opération simultanée
-terraform plan -var-file="dev.tfvars"
+terraform plan
 # Vous devriez voir un message de verrouillage
 ```
 
@@ -134,81 +135,6 @@ Acquiring state lock. This may take a few moments...
 Error: Error acquiring the state lock
 ```
 
-### Gestion des workspaces avec backend S3
-
-Avec un backend S3, les workspaces sont organisés avec le préfixe `env:` :
-
-```bash
-# Créez un workspace pour les tests
-terraform workspace new feature-auth
-terraform workspace select feature-auth
-
-# Déployez dans ce workspace
-terraform plan -var-file="feature-a.tfvars" -out=feature.tfplan
-terraform apply feature.tfplan
-
-# Vérifiez l'état séparé dans S3
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/env:/feature-auth/part7/
-```
-
-### Collaboration en équipe
-
-Le backend S3 permet une collaboration efficace :
-
-**Partage d'état** : Tous les membres de l'équipe accèdent au même état centralisé, éliminant les divergences locales.
-
-**Audit et traçabilité** : S3 conserve l'historique des modifications avec le versioning, permettant de tracer qui a modifié quoi et quand.
-
-**Sécurité d'accès** : Les permissions IAM contrôlent l'accès au bucket et à la table DynamoDB, permettant une gestion fine des autorisations.
-
-**Intégration CI/CD** : Les pipelines d'intégration continue peuvent accéder à l'état partagé pour les déploiements automatisés.
-
-### Configuration des permissions IAM
-
-Pour la collaboration, configurez les permissions appropriées :
-
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:GetObject",
-        "s3:PutObject",
-        "s3:DeleteObject"
-      ],
-      "Resource": "arn:aws:s3:::terraform-state-<YOUR-BUCKET-NAME>/*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "s3:ListBucket"
-      ],
-      "Resource": "arn:aws:s3:::terraform-state-<YOUR-BUCKET-NAME>"
-    },
-    {
-      "Effect": "Allow",
-      "Action": [
-        "dynamodb:GetItem",
-        "dynamodb:PutItem",
-        "dynamodb:DeleteItem"
-      ],
-      "Resource": "arn:aws:dynamodb:*:*:table/terraform-state-lock"
-    }
-  ]
-}
-```
-
-### Workspaces pour la collaboration
-
-Les workspaces avec backend S3 sont particulièrement utiles pour :
-
-**Tests de fonctionnalités** : Chaque développeur peut créer un workspace temporaire pour tester ses modifications sans impacter les autres.
-
-**Branches de développement** : Associez des workspaces à des branches Git pour des tests isolés.
-
-**Environnements de démonstration** : Créez rapidement des environnements pour des présentations ou des validations client.
 
 ### Exemple de workflow collaboratif
 
@@ -219,7 +145,7 @@ terraform workspace new feature-api-v2
 terraform plan -var-file="feature-api.tfvars" -out=feature.tfplan
 terraform apply feature.tfplan
 
-# Développeur B - Travaille sur une autre fonctionnalité
+# Développeur B - Travaille sur une autre fonctionnalité (pas de verrouillage meme si meme etat car workspaces differents)
 git checkout -b feature-ui-update
 terraform workspace new feature-ui-update
 terraform plan -var-file="feature-ui.tfvars" -out=feature.tfplan
@@ -232,54 +158,7 @@ terraform workspace select default
 terraform workspace delete feature-api-v2
 ```
 
-### Surveillance et maintenance
+Cette partie vous a montré comment configurer et utiliser un backend S3 distant avec verrouillage DynamoDB pour la collaboration sécurisée. Le backend distant est essentiel pour le travail en équipe et la gestion sécurisée de l'infrastructure.
 
-Surveillez votre backend S3 :
+## Alternatives pour le backend
 
-```bash
-# Vérifiez la taille du bucket
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME> --summarize --human-readable --recursive
-
-# Listez les versions d'état
-aws s3api list-object-versions --bucket terraform-state-<YOUR-BUCKET-NAME> --prefix part7/
-
-# Surveillez les locks DynamoDB
-aws dynamodb scan --table-name terraform-state-lock
-```
-
-### Nettoyage et bonnes pratiques
-
-**Nettoyage des workspaces** :
-
-```bash
-# Listez tous les workspaces
-terraform workspace list
-
-# Nettoyez les workspaces inutiles
-terraform workspace select old-feature
-terraform destroy -var-file="old-feature.tfvars"
-terraform workspace select default
-terraform workspace delete old-feature
-```
-
-**Bonnes pratiques** :
-
-**Sécurité** : Utilisez toujours un backend distant pour les environnements partagés, chiffrez l'état au repos et en transit, limitez l'accès au bucket S3 et à la table DynamoDB avec IAM.
-
-**Organisation** : Utilisez des préfixes de clés cohérents dans S3 (`projet/environnement/terraform.tfstate`), documentez la structure de vos workspaces et backends.
-
-**Maintenance** : Surveillez la taille des fichiers d'état, nettoyez régulièrement les anciens workspaces, sauvegardez les états critiques et testez régulièrement les procédures de restauration.
-
-**Collaboration** : Établissez des conventions de nommage pour les workspaces, documentez les procédures de création/destruction et utilisez des outils de communication pour coordonner les modifications.
-
-## Conclusion
-
-Cette partie vous a montré comment configurer et utiliser un backend S3 distant avec verrouillage DynamoDB pour la collaboration sécurisée. Le backend distant est essentiel pour le travail en équipe et la gestion professionnelle de l'infrastructure.
-
-Points clés à retenir :
-- Un backend S3 centralisé permet la collaboration sécurisée entre développeurs
-- Le verrouillage DynamoDB prévient les conflits lors des modifications simultanées
-- Les workspaces avec backend S3 sont parfaits pour les tests de fonctionnalités isolés
-- La surveillance et la maintenance régulière du backend sont essentielles
-
-Dans la prochaine partie, nous utiliserons ces bases solides pour créer une architecture VPC multi-AZ complexe et hautement disponible.
