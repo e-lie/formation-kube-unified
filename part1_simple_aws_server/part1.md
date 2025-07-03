@@ -103,7 +103,7 @@ aws s3 ls --profile <votreprenom> # ne devrait pas renvoyer d'erreur (rien du to
 ```coffee
 provider "aws" {
   region = "us-east-1"
-  profile = "<tfuser>"
+  profile = "<awsprofile-votreprenom>"
 }
 ```
 - `provider "aws"` : Configuration du provider AWS

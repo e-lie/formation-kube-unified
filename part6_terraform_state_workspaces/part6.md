@@ -15,7 +15,7 @@ Partez du code de la partie 5 (copiez le dossier ou commitez les changements). D
 
 ```bash
 terraform init
-terraform plan -var-file="dev.tfvars" -out=tfplan
+terraform plan -var-file="feature-a.tfvars" -out=tfplan
 terraform apply tfplan
 ```
 
@@ -160,9 +160,11 @@ Les workspaces sont particulièrement adaptés pour :
 
 **Variantes d'une même application** : Déployer plusieurs versions d'une application dans le même environnement (par exemple, différentes configurations pour différents clients).
 
-### Exemple pratique : déploiements de fonctionnalités
+### Adaptation du code pour les workspaces
 
-Créons un exemple où les workspaces sont utilisés pour tester différentes branches. D'abord, ajoutez une variable pour identifier la fonctionnalité :
+Pour utiliser les workspaces efficacement, nous devons adapter notre code de la partie 5. Voici les modifications nécessaires :
+
+**Ajout d'une nouvelle variable dans `variables.tf`** :
 
 ```coffee
 variable "feature_name" {
@@ -172,11 +174,120 @@ variable "feature_name" {
 }
 ```
 
-Créez un fichier `feature-a.tfvars` pour une fonctionnalité spécifique :
+**Utilisation de `terraform.workspace` dans `vpc.tf`** :
+
+Terraform expose le nom du workspace actuel via `terraform.workspace`. Modifiez toutes les ressources VPC pour utiliser cette valeur :
+
+```coffee
+# VPC avec nom dynamique par workspace
+resource "aws_vpc" "main" {
+  cidr_block           = var.vpc_cidr
+  enable_dns_hostnames = true
+  enable_dns_support   = true
+
+  tags = {
+    Name      = "${terraform.workspace}-vpc"    # Changé de "main-vpc"
+    Workspace = terraform.workspace             # Nouveau tag
+    Feature   = var.feature_name               # Nouveau tag
+  }
+}
+
+# Internet Gateway
+resource "aws_internet_gateway" "main" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name      = "${terraform.workspace}-igw"    # Changé de "main-igw"
+    Workspace = terraform.workspace             # Nouveau tag
+    Feature   = var.feature_name               # Nouveau tag
+  }
+}
+
+# Subnet public
+resource "aws_subnet" "public" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidr
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name      = "${terraform.workspace}-public-subnet"  # Changé de "public-subnet"
+    Workspace = terraform.workspace                     # Nouveau tag
+    Feature   = var.feature_name                       # Nouveau tag
+  }
+}
+
+# Route table
+resource "aws_route_table" "public" {
+  vpc_id = aws_vpc.main.id
+
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.main.id
+  }
+
+  tags = {
+    Name      = "${terraform.workspace}-public-route-table"  # Changé de "public-route-table"
+    Workspace = terraform.workspace                          # Nouveau tag
+    Feature   = var.feature_name                            # Nouveau tag
+  }
+}
+
+# Security Group avec nom unique par workspace
+resource "aws_security_group" "web_ssh_access" {
+  name        = "${terraform.workspace}-web-ssh-access"      # Changé de "web-ssh-access"
+  description = "Allow SSH and HTTP access for ${terraform.workspace}"
+  vpc_id      = aws_vpc.main.id
+
+  # ... règles inchangées ...
+
+  tags = {
+    Name      = "${terraform.workspace}-web-ssh-access"  # Changé de "Web and SSH Access"
+    Workspace = terraform.workspace                      # Nouveau tag
+    Feature   = var.feature_name                        # Nouveau tag
+  }
+}
+```
+
+**Modification de `webserver.tf`** :
+
+```coffee
+resource "aws_instance" "web_server" {
+  ami                    = data.aws_ami.custom_ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web_ssh_access.id]
+
+  connection {
+    type        = "ssh"
+    user        = "root"
+    private_key = file(var.ssh_key_path)
+    host        = self.public_ip
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "apt-get update",
+      "apt-get install -y nginx",
+      "systemctl start nginx",
+      "systemctl enable nginx",
+      # Modification importante : affichage du workspace et de la fonctionnalité
+      "echo '<h1>Feature: ${var.feature_name} (${terraform.workspace})</h1>' > /var/www/html/index.html"
+    ]
+  }
+
+  tags = {
+    Name      = "${terraform.workspace}-web-server"  # Changé de "nginx-web-server-vpc"
+    Workspace = terraform.workspace                  # Nouveau tag
+    Feature   = var.feature_name                    # Nouveau tag
+  }
+}
+```
+
+**Création du fichier `feature-a.tfvars`** pour tester une fonctionnalité spécifique :
 
 ```coffee
 aws_region           = "eu-west-3"
-aws_profile          = "laptop"
+aws_profile          = "<awsprofile-votreprenom>"
 vpc_cidr             = "10.100.0.0/16"
 public_subnet_cidr   = "10.100.1.0/24"
 instance_type        = "t2.micro"
@@ -184,54 +295,7 @@ ssh_key_path         = "~/.ssh/id_terraform"
 feature_name         = "feature-payment-api"
 ```
 
-### Utilisation avec terraform.workspace
-
-Terraform expose le nom du workspace actuel via `terraform.workspace`. Modifiez vos ressources pour l'utiliser. Dans `vpc.tf` :
-
-```coffee
-resource "aws_vpc" "main" {
-  cidr_block = var.vpc_cidr
-  # ...
-
-  tags = {
-    Name      = "${terraform.workspace}-vpc"
-    Workspace = terraform.workspace
-    Feature   = var.feature_name
-  }
-}
-
-# Security Group avec nom unique par workspace
-resource "aws_security_group" "web_ssh_access" {
-  name        = "${terraform.workspace}-web-ssh-access"
-  description = "Allow SSH and HTTP access for ${terraform.workspace}"
-  vpc_id      = aws_vpc.main.id
-  # ...
-}
-```
-
-Et dans `webserver.tf` :
-
-```coffee
-resource "aws_instance" "web_server" {
-  # ...
-  
-  provisioner "remote-exec" {
-    inline = [
-      "apt-get update",
-      "apt-get install -y nginx",
-      "systemctl start nginx",
-      "systemctl enable nginx",
-      "echo '<h1>Feature: ${var.feature_name} (${terraform.workspace})</h1>' > /var/www/html/index.html"
-    ]
-  }
-
-  tags = {
-    Name      = "${terraform.workspace}-web-server"
-    Workspace = terraform.workspace
-    Feature   = var.feature_name
-  }
-}
-```
+Ces modifications permettent à chaque workspace d'avoir des noms de ressources uniques et d'afficher clairement dans quel contexte il fonctionne.
 
 ### Déploiement de branches de fonctionnalités
 

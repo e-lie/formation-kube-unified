@@ -14,7 +14,7 @@ variable "region" {
 
 variable "profile" {
   type    = string
-  default = "<tfuser>"
+  default = "<awsprofile-votreprenom>"
 }
 
 data "amazon-ami" "ubuntu" {

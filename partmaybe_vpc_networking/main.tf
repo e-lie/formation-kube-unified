@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3"
-  profile = "<tfuser>"
+  profile = "<awsprofile-votreprenom>"
 }
 
 # Récupération de l'AMI personnalisée

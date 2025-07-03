@@ -106,7 +106,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3"
-  profile = "<tfuser>"
+  profile = "<awsprofile-votreprenom>"
 }
 
 data "aws_ami" "custom_ubuntu" {

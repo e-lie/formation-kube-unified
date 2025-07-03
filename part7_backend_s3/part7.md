@@ -44,7 +44,7 @@ terraform {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
     key            = "part7/terraform.tfstate"
     region         = "eu-west-3"
-    profile        = "laptop"
+    profile        = "<awsprofile-votreprenom>"
     encrypt        = true
     dynamodb_table = "terraform-state-lock"
   }

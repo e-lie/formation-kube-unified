@@ -62,7 +62,7 @@ variable "region" {
 
 variable "profile" {
   type    = string
-  default = "<tfuser>"
+  default = "<awsprofile-votreprenom>"
 }
 
 data "amazon-ami" "ubuntu" {
@@ -145,7 +145,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3"
-  profile = "<tfuser>"
+  profile = "<awsprofile-votreprenom>"
 }
 
 data "aws_ami" "custom_ubuntu" {
