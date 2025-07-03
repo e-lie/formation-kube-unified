@@ -11,7 +11,7 @@ L'état Terraform est un fichier JSON qui maintient la correspondance entre votr
 
 ### Analyse du fichier d'état local
 
-Partez du code de la partie 5 (copiez le dossier ou commitez les changements). Dans le dossier part6, déployez l'infrastructure pour créer un état :
+Partez du code de la partie 5 (copiez le dossier ou commitez les changements). Dans le dossier part6, assurez vous du bon déploiement l'infrastructure (avoir un état) :
 
 ```bash
 terraform init
@@ -39,24 +39,76 @@ terraform show -json > state.json
 
 Ces commandes permettent d'explorer l'état sans le modifier. Vous y trouverez les identifiants des ressources (IDs AWS), les métadonnées de création, les dépendances entre ressources et les attributs sensibles (marqués comme tels).
 
-### Lecture directe du fichier terraform.tfstate
+### Structure du fichier terraform.tfstate
 
-Examinez le fichier d'état brut :
+Ouvrez le fichier `terraform.tfstate` dans votre éditeur pour examiner sa structure. C'est un fichier JSON lisible qui contient toute l'information sur votre infrastructure :
 
-```bash
-# Lecture du fichier d'état (attention : lecture seule !)
-cat terraform.tfstate | jq '.'
-
-# Extraire uniquement les ressources
-cat terraform.tfstate | jq '.resources'
-
-# Voir la version du state schema
-cat terraform.tfstate | jq '.version'
+```json
+{
+  "version": 4,
+  "terraform_version": "1.5.7",
+  "serial": 42,
+  "lineage": "8a8b6c91-f6f7-c289-66f7-1b4e5dca8d50",
+  "outputs": {
+    "web_url": {
+      "value": "http://13.37.42.10",
+      "type": "string"
+    }
+  },
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "aws_vpc",
+      "name": "main",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 1,
+          "attributes": {
+            "id": "vpc-0123456789abcdef0",
+            "cidr_block": "10.0.0.0/16",
+            "tags": {
+              "Name": "main-vpc"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
 ```
 
-Le fichier d'état contient plusieurs éléments clés. La `version` indique le format du state, `terraform_version` la version de Terraform utilisée, `serial` un numéro pour la gestion de concurrence, `lineage` un UUID unique pour ce state, et `resources` la liste complète des ressources et leurs attributs.
+**Éléments importants de la structure :**
 
-**⚠️ Important :** Ne modifiez jamais directement le fichier d'état. Utilisez toujours les commandes Terraform.
+- **version** : Version du format de fichier d'état (actuellement 4)
+- **terraform_version** : Version de Terraform qui a créé cet état
+- **serial** : Compteur incrémenté à chaque modification pour éviter les conflits
+- **lineage** : UUID unique généré à la création de l'état, reste constant pendant toute sa vie
+- **outputs** : Valeurs de sortie de votre configuration
+- **resources** : Liste complète des ressources avec leurs attributs AWS réels
+
+Chaque ressource contient :
+- **mode** : "managed" (créée par Terraform) ou "data" (source de données)
+- **type** et **name** : Correspondent à votre configuration (ex: `aws_vpc.main`)
+- **provider** : Provider utilisé pour gérer cette ressource
+- **instances** : Détails de chaque instance de la ressource avec tous ses attributs
+
+### Le fichier terraform.tfstate.backup
+
+Terraform crée automatiquement un fichier `terraform.tfstate.backup` qui contient la version précédente de l'état avant la dernière modification. Ce fichier de sauvegarde est crucial pour la récupération en cas de problème :
+
+- Créé automatiquement à chaque `terraform apply` ou modification d'état
+- Contient l'état exact d'avant la dernière opération
+- Permet de revenir en arrière en cas de corruption ou d'erreur
+- Ne doit pas être commité dans Git mais peut être sauvegardé séparément
+
+En cas de problème grave avec l'état, vous pouvez restaurer manuellement :
+```bash
+# En dernier recours uniquement !
+cp terraform.tfstate.backup terraform.tfstate
+```
+
+**⚠️ Important :** Ne modifiez jamais directement les fichiers d'état. Utilisez toujours les commandes Terraform pour toute manipulation.
 
 ### Commandes avancées d'état
 
@@ -76,7 +128,7 @@ Le fichier d'état contient plusieurs éléments clés. La `version` indique le 
 
 ## Workspaces : cas d'usage et limitations
 
-Les workspaces Terraform permettent de créer plusieurs instances isolées d'une même configuration, chacune avec son propre fichier d'état. Contrairement à une idée répandue, ils ne sont pas la solution idéale pour séparer des environnements critiques comme production et développement.
+Les workspaces Terraform permettent de créer plusieurs instances isolées d'une même configuration, chacune avec son propre fichier d'état. Contrairement à une idée répandue, ils ne sont pas la solution idéale pour séparer des environnements critiques comme production et développement. Il est facile de faire des erreurs avec en tout cas manuellement. Pour séparer dev et prod il on utilise plus classiquement deux backend séparés (avec un authentification et un code distinct qu'on peut factoriser avec des modules)
 
 ### Comprendre les workspaces
 
@@ -94,7 +146,7 @@ terraform workspace select feature-test
 terraform workspace list
 ```
 
-Chaque workspace possède son propre fichier d'état, stocké dans le même backend mais dans des chemins séparés.
+Chaque workspace possède son propre fichier d'état, stocké dans le même backend mais dans des chemins séparés (ici avec un backend local `terraform.state.d`).
 
 ### Cas d'usage appropriés pour les workspaces
 
