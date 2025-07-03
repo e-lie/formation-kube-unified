@@ -10,7 +10,7 @@ terraform {
 
   backend "s3" {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
-    key            = "part6/terraform.tfstate"
+    key            = "part7/terraform.tfstate"
     region         = "eu-west-3"
     profile        = "laptop"
     encrypt        = true
