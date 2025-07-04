@@ -286,9 +286,20 @@ resource "aws_lb_listener" "web" {
 
 ## Sorties adaptatives
 
-Modifiez les outputs dans `webserver.tf` pour gérer les multiples instances :
+Pour une meilleure organisation, créons un fichier `outputs.tf` dédié qui rassemble toutes les sorties du projet :
 
 ```coffee
+# Outputs réseau
+output "vpc_id" {
+  description = "ID of the VPC"
+  value       = aws_vpc.main.id
+}
+
+output "subnet_id" {
+  description = "ID of the public subnet"
+  value       = aws_subnet.public.id
+}
+
 # Outputs pour les instances
 output "instance_ids" {
   description = "IDs of the web server instances"
@@ -302,16 +313,14 @@ output "instance_public_ips" {
 
 # Output conditionnel pour l'ALB
 output "load_balancer_dns" {
-  description = "DNS name of the load balancer (if multiple instances)"
+  description = "DNS name of the load balancer (if enabled)"
   value       = var.instance_count > 1 ? aws_lb.main[0].dns_name : null
 }
 
 # URL de l'application (ALB ou première instance)
 output "web_url" {
   description = "URL to access the web application"
-  value = var.instance_count > 1 ? 
-    "http://${aws_lb.main[0].dns_name}" : 
-    "http://${aws_instance.web_server[0].public_ip}"
+  value = var.instance_count > 1 ? "http://${aws_lb.main[0].dns_name}" : "http://${aws_instance.web_server[0].public_ip}"
 }
 
 # URLs de toutes les instances (pour debug)
@@ -324,9 +333,13 @@ output "individual_server_urls" {
 }
 ```
 
+N'oubliez pas de supprimer les outputs de `webserver.tf` et `vpc.tf`.
+
 ## Concepts avancés : for_each
 
-Bien que nous utilisions `count` dans cet exemple, `for_each` offre plus de flexibilité. Voici un exemple alternatif :
+Bien que nous utilisions `count` dans cet exemple, `for_each` offre plus de flexibilité. 
+
+Voici en particulier un exemple alternatif ou les serveurs ne sont pas des instances indistinctes mais des entités nomméés et stables. Cet aspect est important les instances sont stateful et pas nécessairement identiques (ce qui n'est pas notre cas ici).
 
 ```coffee
 # Configuration avec for_each (exemple alternatif)
