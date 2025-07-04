@@ -15,7 +15,7 @@ Créer son propre VPC offre plusieurs avantages par rapport à l'utilisation du 
 
 ## Architecture de notre VPC simple
 
-![Architecture VPC Simple](vpc-simple-diagram.png)
+![Architecture VPC Simple](images/vpc-simple-diagram.png)
 
 Notre architecture comprend les éléments essentiels d'un VPC fonctionnel. Nous créons un VPC avec un seul subnet public contenant notre serveur web Nginx, une Internet Gateway pour l'accès Internet, une table de routage pour diriger le trafic et un Security Group pour contrôler l'accès.
 

@@ -40,7 +40,7 @@ Les Security Groups agissent comme des pare-feu virtuels pour contrôler le traf
 
 ## Architecture du VPC
 
-![Architecture VPC](vpc-diagram.png)
+![Architecture VPC](images/vpc-diagram.png)
 
 Notre architecture VPC comprend les éléments suivants :
 
