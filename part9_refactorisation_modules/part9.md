@@ -179,86 +179,63 @@ cp ../part9_refactorisation_modules/part9.md .
 
 Parfois, vous avez des ressources AWS créées manuellement ou par d'autres outils que vous voulez intégrer à Terraform. C'est là qu'intervient `terraform import`.
 
-### Exemple pratique : Importation d'un enregistrement Route53
+### Exemple pratique : Importation d'un bucket S3
 
-Supposons que vous ayez créé manuellement un enregistrement DNS pour pointer vers votre load balancer, et que vous vouliez maintenant le gérer avec Terraform. Nous allons utiliser le projet d'exemple Route53 pour démontrer cette fonctionnalité.
+Supposons que vous ayez créé manuellement un bucket S3 pour stocker des logs ou des fichiers, et que vous vouliez maintenant le gérer avec Terraform.
 
-**Création manuelle d'une ressource DNS :**
+**Création manuelle d'un bucket S3 :**
 
 ```bash
-# Depuis le projet Route53 exemple
-cd ../route53_example_for_import
+# Créons un bucket S3 avec un nom unique
+BUCKET_NAME="terraform-demo-logs-$(date +%Y%m%d-%H%M%S)"
+aws s3 mb s3://$BUCKET_NAME --region eu-west-3 --profile <awsprofile-votreprenom>
 
-# Récupérez l'IP de votre load balancer
-cd ../part9_refactorisation_modules
-ALB_DNS=$(terraform output -raw load_balancer_dns)
-echo "ALB DNS: $ALB_DNS"
-
-# Résolvez l'IP (pour l'exemple, on utilisera une IP fictive)
-cd ../route53_example_for_import
+# Vérifions que le bucket existe
+aws s3 ls s3://$BUCKET_NAME --profile <awsprofile-votreprenom>
+echo "Bucket créé : $BUCKET_NAME"
 ```
 
-**Création de la zone et de l'enregistrement manuellement :**
+**Déclaration dans Terraform :**
 
-```bash
-# Créez d'abord la zone DNS
-terraform apply -target=aws_route53_zone.main
+Ajoutons maintenant la déclaration de ce bucket dans notre configuration Terraform. Ajoutez cette section à votre `main.tf` :
 
-# Notez l'ID de la zone
-ZONE_ID=$(terraform output -raw zone_id)
-echo "Zone ID: $ZONE_ID"
+```coffee
+# Bucket S3 pour les logs (créé manuellement, à importer)
+resource "aws_s3_bucket" "logs" {
+  bucket = "terraform-demo-logs-XXXXXXXX-XXXXXX"  # Remplacez par votre nom de bucket
+}
 
-# Créez manuellement un enregistrement DNS via AWS CLI
-aws route53 change-resource-record-sets \
-  --hosted-zone-id $ZONE_ID \
-  --change-batch '{
-    "Changes": [{
-      "Action": "CREATE",
-      "ResourceRecordSet": {
-        "Name": "web.example-terraform-demo.com",
-        "Type": "A",
-        "TTL": 300,
-        "ResourceRecords": [{"Value": "1.2.3.4"}]
-      }
-    }]
-  }' \
-  --profile <awsprofile-votreprenom>
+resource "aws_s3_bucket_versioning" "logs" {
+  bucket = aws_s3_bucket.logs.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 ```
 
 **Importation dans Terraform :**
 
 ```bash
-# Importez l'enregistrement existant
-terraform import aws_route53_record.web ${ZONE_ID}_web.example-terraform-demo.com_A
+# Importez le bucket existant
+terraform import aws_s3_bucket.logs $BUCKET_NAME
 
 # Vérifiez que l'import a fonctionné
 terraform plan
 ```
 
-Cette opération intègre une ressource existante dans l'état Terraform, permettant de la gérer ensuite via les fichiers de configuration.
+Le plan devrait montrer que Terraform veut ajouter le versioning (qui n'existait pas sur le bucket créé manuellement) mais ne veut pas recréer le bucket lui-même.
 
-### Intégration avec l'infrastructure principale
-
-Si vous souhaitez intégrer la gestion DNS directement dans votre infrastructure principale, vous pouvez ajouter une configuration Route53 optionnelle. Voici comment procéder :
-
-```coffee
-# Module DNS (si on veut gérer Route53)
-# resource "aws_route53_record" "web" {
-#   count   = var.instance_count > 1 ? 1 : 0
-#   zone_id = var.route53_zone_id
-#   name    = "web.${var.domain_name}"
-#   type    = "CNAME"
-#   ttl     = 300
-#   records = [module.loadbalancer.load_balancer_dns]
-# }
-```
-
-Cette configuration permettrait d'importer l'enregistrement DNS créé précédemment :
+**Finalisation de la configuration :**
 
 ```bash
-# Si vous voulez importer l'enregistrement DNS créé précédemment
-# terraform import 'aws_route53_record.web[0]' ${ZONE_ID}_web.example-terraform-demo.com_A
+# Appliquez les modifications pour ajouter le versioning
+terraform apply
+
+# Vérifiez que tout fonctionne
+terraform show aws_s3_bucket.logs
 ```
+
+Cette opération intègre une ressource existante dans l'état Terraform, permettant de la gérer ensuite via les fichiers de configuration. C'est particulièrement utile pour intégrer des ressources créées avant l'adoption de Terraform ou par d'autres équipes.
 
 ## Bonnes pratiques pour la gestion d'état
 
@@ -276,14 +253,16 @@ cp terraform.tfstate terraform.tfstate.backup-$(date +%Y%m%d-%H%M%S)
 terraform show -json > state-backup-$(date +%Y%m%d-%H%M%S).json
 ```
 
-**Testez sur un workspace séparé :**
+**Idéalement testez sur un workspace séparé :**
+
+...donc sur une copie infra de test c'est l'avantage du cloud et de 'IaC de pouvoir faire des copies temporaire d'une infra. Mais ce n'est pas toujours possible selon les dépendances de votre système et les outils de réplication de son état s'il est stateful.
 
 ```bash
 # Créez un workspace de test
 terraform workspace new refactoring-test
 terraform apply -var-file="multi-server.tfvars"
 
-# Effectuez la migration sur ce workspace
+# Effectuez la migration sur ce workspace 
 # Si ça marche, appliquez sur le workspace principal
 ```
 
@@ -298,46 +277,6 @@ terraform state list > resources-after.txt
 diff resources-before.txt resources-after.txt
 ```
 
-### Commandes utiles pour la gestion d'état
-
-Voici les commandes principales pour manipuler l'état Terraform :
-
-```bash
-# Lister toutes les ressources
-terraform state list
-
-# Voir les détails d'une ressource
-terraform state show aws_instance.web_server[0]
-
-# Retirer une ressource de l'état (sans la détruire)
-terraform state rm aws_instance.web_server[0]
-
-# Importer une ressource existante
-terraform import aws_instance.web_server[0] i-1234567890abcdef0
-
-# Déplacer une ressource
-terraform state mv aws_instance.web_server[0] module.webserver.aws_instance.web_server[0]
-
-# Remplacer un provider
-terraform state replace-provider hashicorp/aws registry.terraform.io/hashicorp/aws
-```
-
-### Cas d'usage courants
-
-**Renommage de ressources :**
-```bash
-terraform state mv aws_instance.old_name aws_instance.new_name
-```
-
-**Déplacement vers un module :**
-```bash
-terraform state mv aws_instance.web module.webserver.aws_instance.web
-```
-
-**Import de ressources existantes :**
-```bash
-terraform import module.webserver.aws_instance.web[0] i-1234567890abcdef0
-```
 
 ## Validation finale
 
