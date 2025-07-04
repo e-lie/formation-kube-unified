@@ -10,10 +10,11 @@ terraform {
 
   backend "s3" {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
-    key            = "part7/terraform.tfstate"
+    key            = "tp-fil-rouge-dev/terraform.tfstate"
     region         = "eu-west-3"
     profile        = "<awsprofile-votreprenom>"
     encrypt        = true
+    use_lockfile   = true
     dynamodb_table = "terraform-state-lock"
   }
 }

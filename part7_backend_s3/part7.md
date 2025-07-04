@@ -42,10 +42,11 @@ terraform {
 
   backend "s3" {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
-    key            = "part7/terraform.tfstate"
+    key            = "tp-fil-rouge-dev/terraform.tfstate"
     region         = "eu-west-3"
     profile        = "<awsprofile-votreprenom>"
     encrypt        = true
+    use_lockfile   = true
     dynamodb_table = "terraform-state-lock"
   }
 }
@@ -114,6 +115,23 @@ Le backend distant offre plusieurs avantages essentiels :
 - **Audit et traçabilité** : S3 conserve l'historique des modifications avec le versioning, permettant de tracer qui a modifié quoi et quand
 - **Sécurité d'accès** : Les permissions IAM contrôlent l'accès au bucket et à la table DynamoDB, permettant une gestion fine des autorisations
 - **Intégration CI/CD** : Les pipelines d'intégration continue peuvent accéder à l'état partagé pour les déploiements automatisés
+
+### Le mécanisme de lock file
+
+Le paramètre `use_lockfile = true` active explicitement le système de verrouillage d'état de Terraform, tandis que `dynamodb_table` spécifie où stocker les verrous. Voici comment cela fonctionne :
+
+**Lock file** : Terraform crée un enregistrement de verrouillage temporaire dans la table DynamoDB spécifiée qui empêche les modifications simultanées de l'état. Ce verrou contient :
+- L'ID de l'opération en cours
+- L'horodatage du début de l'opération  
+- L'utilisateur qui a acquis le verrou
+- Les informations sur l'environnement d'exécution
+
+**Cycle de vie du verrou** :
+1. **Acquisition** : Terraform tente d'acquérir le verrou au début de chaque opération (`plan`, `apply`, `destroy`)
+2. **Maintien** : Le verrou est maintenu pendant toute la durée de l'opération
+3. **Libération** : Le verrou est automatiquement libéré à la fin de l'opération (succès ou échec)
+
+**Gestion des conflits** : Si une seconde opération tente de modifier le même état, elle attendra que le premier verrou soit libéré ou affichera une erreur après un timeout.
 
 ### Test du verrouillage
 
