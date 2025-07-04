@@ -4,9 +4,9 @@ output "vpc_id" {
   value       = aws_vpc.main.id
 }
 
-output "subnet_id" {
-  description = "ID of the public subnet"
-  value       = aws_subnet.public.id
+output "subnet_ids" {
+  description = "IDs of the public subnets"
+  value       = [aws_subnet.public.id, aws_subnet.public_2.id]
 }
 
 # Outputs pour les instances

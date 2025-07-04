@@ -22,14 +22,34 @@ resource "aws_internet_gateway" "main" {
   }
 }
 
-# Subnet public
+# Data source pour les zones de disponibilité
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# Subnet public 1
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidr
+  availability_zone       = data.aws_availability_zones.available.names[0]
   map_public_ip_on_launch = true
 
   tags = {
-    Name      = "${terraform.workspace}-public-subnet"
+    Name      = "${terraform.workspace}-public-subnet-1"
+    Workspace = terraform.workspace
+    Feature   = var.feature_name
+  }
+}
+
+# Subnet public 2 (pour ALB multi-AZ)
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidr_2
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name      = "${terraform.workspace}-public-subnet-2"
     Workspace = terraform.workspace
     Feature   = var.feature_name
   }
@@ -51,9 +71,15 @@ resource "aws_route_table" "public" {
   }
 }
 
-# Association subnet avec route table
+# Association subnet 1 avec route table
 resource "aws_route_table_association" "public" {
   subnet_id      = aws_subnet.public.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Association subnet 2 avec route table
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
   route_table_id = aws_route_table.public.id
 }
 
