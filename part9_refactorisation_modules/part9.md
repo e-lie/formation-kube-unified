@@ -26,7 +26,7 @@ module "webserver" {
 
 La ressource prend alors l'adresse `module.webserver.aws_instance.web_server[0]` dans l'état. C'est exactement ce qu'on veut éviter en production : une destruction/recréation non planifiée.
 
-## Solution 1 : terraform state mv
+## terraform state mv
 
 La commande `terraform state mv` permet de déplacer des ressources dans l'état sans les détruire/recréer.
 
@@ -47,20 +47,26 @@ terraform state list
 
 Cette commande vous montrera toutes les ressources déployées, organisées de manière monolithique. Vous devriez voir des ressources comme `aws_instance.web_server[0]`, `aws_lb.main[0]`, `aws_vpc.main`, etc.
 
-### Copie de l'état pour la refactorisation
+### Préparation de la refactorisation
 
-Nous allons maintenant copier l'état existant vers notre nouveau projet modulaire :
+Nous allons effectuer la refactorisation directement dans le projet part8. Cette approche est plus réaliste car elle utilise le backend S3 configuré :
 
 ```bash
-# Copiez l'infrastructure vers part9
-cd ../part9_refactorisation_modules
+# Travaillons directement dans part8 pour commencer
+cd part8_count_loadbalancer
 
-# Copiez l'état depuis part8 
-cp ../part8_count_loadbalancer/terraform.tfstate .
-cp ../part8_count_loadbalancer/terraform.tfstate.backup .
+# Créons d'abord une sauvegarde de sécurité
+terraform state pull > terraform.tfstate.backup-$(date +%Y%m%d-%H%M%S)
 
-# Initialisez part9 avec l'état existant
-terraform init
+# Copions les modules depuis part9
+cp -r ../part9_refactorisation_modules/modules .
+
+# Remplaçons directement les fichiers par leurs versions modulaires
+cp ../part9_refactorisation_modules/main.tf .
+cp ../part9_refactorisation_modules/outputs.tf .
+
+# Supprimons les anciens fichiers maintenant obsolètes
+rm vpc.tf webserver.tf loadbalancer.tf
 ```
 
 ### Test avant migration
@@ -152,7 +158,24 @@ terraform plan -var-file="multi-server.tfvars"
 
 Si tout s'est bien passé, le plan devrait montrer "No changes" ou seulement des modifications mineures ! Cela confirme que nos ressources sont maintenant correctement organisées en modules sans risque de destruction.
 
-## Solution 2 : terraform import
+### Finalisation de la refactorisation
+
+Une fois la migration terminée et validée, nous avons maintenant une infrastructure modulaire fonctionnelle. Si vous souhaitez garder le projet part8 intact, vous pouvez créer une copie finale :
+
+```bash
+# Copions le projet refactorisé vers part9
+cd ..
+cp -r part8_count_loadbalancer part9_refactorisation_modules_final
+
+# Nettoyons le répertoire part9 final
+cd part9_refactorisation_modules_final
+rm -f part8.md architecture.mmd architecture_part8.png alb-components.mmd alb-components.png
+
+# Ajoutons la documentation part9
+cp ../part9_refactorisation_modules/part9.md .
+```
+
+## terraform import
 
 Parfois, vous avez des ressources AWS créées manuellement ou par d'autres outils que vous voulez intégrer à Terraform. C'est là qu'intervient `terraform import`.
 
