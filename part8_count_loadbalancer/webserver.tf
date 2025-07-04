@@ -62,13 +62,13 @@ output "instance_public_ips" {
 # Output conditionnel pour l'ALB
 output "load_balancer_dns" {
   description = "DNS name of the load balancer (if enabled)"
-  value       = var.instance_count > 1 && var.enable_load_balancer ? aws_lb.main[0].dns_name : null
+  value       = var.instance_count > 1 ? aws_lb.main[0].dns_name : null
 }
 
 # URL de l'application (ALB ou première instance)
 output "web_url" {
   description = "URL to access the web application"
-  value = var.instance_count > 1 && var.enable_load_balancer ? 
+  value = var.instance_count > 1 ? 
     "http://${aws_lb.main[0].dns_name}" : 
     "http://${aws_instance.web_server[0].public_ip}"
 }

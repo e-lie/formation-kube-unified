@@ -27,7 +27,7 @@ Un **load balancer** (répartiteur de charge) distribue intelligemment le trafic
 
 Notre objectif est de créer une infrastructure avec :
 - **3 serveurs web** dans la même région
-- Un **Application Load Balancer (ALB)** si le nombre de serveurs > 1
+- Un **Application Load Balancer (ALB)** automatiquement créé si le nombre de serveurs > 1
 - **Target Group** pour gérer la santé des serveurs
 - **Health checks** automatiques
 - Configuration dynamique basée sur le nombre d'instances
@@ -48,12 +48,6 @@ variable "instance_count" {
   type        = number
   default     = 3
 }
-
-variable "enable_load_balancer" {
-  description = "Enable load balancer when instance count > 1"
-  type        = bool
-  default     = true
-}
 ```
 
 ### Modification de webserver.tf avec count
@@ -61,22 +55,7 @@ variable "enable_load_balancer" {
 Transformons notre instance unique en plusieurs instances avec `count` :
 
 ```coffee
-# Data source pour l'AMI personnalisée (inchangé)
-data "aws_ami" "custom_ubuntu" {
-  most_recent = true
-  owners      = ["self"]
-
-  filter {
-    name   = "name"
-    values = ["ubuntu-22.04-custom-*"]
-  }
-
-  filter {
-    name   = "state"
-    values = ["available"]
-  }
-}
-
+...
 # Instances EC2 avec count
 resource "aws_instance" "web_server" {
   count                  = var.instance_count
@@ -131,9 +110,9 @@ resource "aws_security_group" "web_servers" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTP depuis l'ALB seulement (si ALB activé)
+  # HTTP depuis l'ALB seulement (si plusieurs instances)
   dynamic "ingress" {
-    for_each = var.instance_count > 1 && var.enable_load_balancer ? [1] : []
+    for_each = var.instance_count > 1 ? [1] : []
     content {
       from_port       = 80
       to_port         = 80
@@ -142,9 +121,9 @@ resource "aws_security_group" "web_servers" {
     }
   }
 
-  # HTTP direct si pas d'ALB
+  # HTTP direct si une seule instance
   dynamic "ingress" {
-    for_each = var.instance_count == 1 || !var.enable_load_balancer ? [1] : []
+    for_each = var.instance_count == 1 ? [1] : []
     content {
       from_port   = 80
       to_port     = 80
@@ -169,7 +148,7 @@ resource "aws_security_group" "web_servers" {
 
 # Security Group pour l'ALB (conditionnel)
 resource "aws_security_group" "alb" {
-  count       = var.instance_count > 1 && var.enable_load_balancer ? 1 : 0
+  count       = var.instance_count > 1 ? 1 : 0
   name        = "${terraform.workspace}-alb-sg"
   description = "Security group for Application Load Balancer"
   vpc_id      = aws_vpc.main.id
@@ -205,12 +184,35 @@ resource "aws_security_group" "alb" {
 
 ## Configuration du Load Balancer
 
+Allons lire la documentation des resources autour de Application Load Balancer (Amazon LoadBalancer) sur le registry terraform : 
+
+https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb
+
+### Composants d'un Application Load Balancer
+
+Un ALB est composé de plusieurs ressources Terraform interconnectées :
+
+![Composants ALB - Relations entre ressources Terraform](alb-components.png)
+
+**Ressources principales :**
+- **aws_lb** : Le load balancer principal qui reçoit le trafic
+- **aws_lb_listener** : Écoute sur un port spécifique (80, 443) et définit les règles de routage
+- **aws_lb_target_group** : Groupe logique qui contient les instances backend
+- **aws_lb_target_group_attachment** : Lie chaque instance EC2 au target group
+- **Health Checks** : Vérifications automatiques de santé des instances
+
+**Flux de trafic :**
+1. Client → ALB (port 80)
+2. ALB → Listener (règles de routage)
+3. Listener → Target Group (forward)
+4. Target Group → Instances saines (round-robin)
+
 Créons un nouveau fichier `loadbalancer.tf` pour gérer l'ALB :
 
 ```coffee
 # Application Load Balancer (conditionnel)
 resource "aws_lb" "main" {
-  count              = var.instance_count > 1 && var.enable_load_balancer ? 1 : 0
+  count              = var.instance_count > 1 ? 1 : 0
   name               = "${terraform.workspace}-alb"
   internal           = false
   load_balancer_type = "application"
@@ -229,7 +231,7 @@ resource "aws_lb" "main" {
 
 # Target Group pour les serveurs web
 resource "aws_lb_target_group" "web_servers" {
-  count    = var.instance_count > 1 && var.enable_load_balancer ? 1 : 0
+  count    = var.instance_count > 1 ? 1 : 0
   name     = "${terraform.workspace}-web-tg"
   port     = 80
   protocol = "HTTP"
@@ -256,7 +258,7 @@ resource "aws_lb_target_group" "web_servers" {
 
 # Attachement des instances au Target Group
 resource "aws_lb_target_group_attachment" "web_servers" {
-  count            = var.instance_count > 1 && var.enable_load_balancer ? var.instance_count : 0
+  count            = var.instance_count > 1 ? var.instance_count : 0
   target_group_arn = aws_lb_target_group.web_servers[0].arn
   target_id        = aws_instance.web_server[count.index].id
   port             = 80
@@ -264,7 +266,7 @@ resource "aws_lb_target_group_attachment" "web_servers" {
 
 # Listener pour l'ALB
 resource "aws_lb_listener" "web" {
-  count             = var.instance_count > 1 && var.enable_load_balancer ? 1 : 0
+  count             = var.instance_count > 1 ? 1 : 0
   load_balancer_arn = aws_lb.main[0].arn
   port              = "80"
   protocol          = "HTTP"
@@ -300,14 +302,14 @@ output "instance_public_ips" {
 
 # Output conditionnel pour l'ALB
 output "load_balancer_dns" {
-  description = "DNS name of the load balancer (if enabled)"
-  value       = var.instance_count > 1 && var.enable_load_balancer ? aws_lb.main[0].dns_name : null
+  description = "DNS name of the load balancer (if multiple instances)"
+  value       = var.instance_count > 1 ? aws_lb.main[0].dns_name : null
 }
 
 # URL de l'application (ALB ou première instance)
 output "web_url" {
   description = "URL to access the web application"
-  value = var.instance_count > 1 && var.enable_load_balancer ? 
+  value = var.instance_count > 1 ? 
     "http://${aws_lb.main[0].dns_name}" : 
     "http://${aws_instance.web_server[0].public_ip}"
 }
@@ -385,7 +387,6 @@ instance_type        = "t2.micro"
 ssh_key_path         = "~/.ssh/id_terraform"
 feature_name         = "single-server-test"
 instance_count       = 1
-enable_load_balancer = false
 ```
 
 **multi-server.tfvars** (serveurs multiples avec ALB) :
@@ -398,7 +399,6 @@ instance_type        = "t2.micro"
 ssh_key_path         = "~/.ssh/id_terraform"
 feature_name         = "load-balanced-cluster"
 instance_count       = 3
-enable_load_balancer = true
 ```
 
 ### Commandes de déploiement

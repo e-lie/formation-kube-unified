@@ -6,4 +6,3 @@ instance_type        = "t2.micro"
 ssh_key_path         = "~/.ssh/id_terraform"
 feature_name         = "load-balanced-cluster"
 instance_count       = 3
-enable_load_balancer = true

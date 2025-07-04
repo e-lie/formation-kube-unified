@@ -6,4 +6,3 @@ instance_type        = "t2.micro"
 ssh_key_path         = "~/.ssh/id_terraform"
 feature_name         = "single-server-test"
 instance_count       = 1
-enable_load_balancer = false

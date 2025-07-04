@@ -45,9 +45,3 @@ variable "instance_count" {
   type        = number
   default     = 3
 }
-
-variable "enable_load_balancer" {
-  description = "Enable load balancer when instance count > 1"
-  type        = bool
-  default     = true
-}

@@ -73,7 +73,7 @@ resource "aws_security_group" "web_servers" {
 
   # HTTP depuis l'ALB seulement (si ALB activé)
   dynamic "ingress" {
-    for_each = var.instance_count > 1 && var.enable_load_balancer ? [1] : []
+    for_each = var.instance_count > 1 ? [1] : []
     content {
       from_port       = 80
       to_port         = 80
@@ -84,7 +84,7 @@ resource "aws_security_group" "web_servers" {
 
   # HTTP direct si pas d'ALB
   dynamic "ingress" {
-    for_each = var.instance_count == 1 || !var.enable_load_balancer ? [1] : []
+    for_each = var.instance_count == 1 ? [1] : []
     content {
       from_port   = 80
       to_port     = 80
@@ -109,7 +109,7 @@ resource "aws_security_group" "web_servers" {
 
 # Security Group pour l'ALB (conditionnel)
 resource "aws_security_group" "alb" {
-  count       = var.instance_count > 1 && var.enable_load_balancer ? 1 : 0
+  count       = var.instance_count > 1 ? 1 : 0
   name        = "${terraform.workspace}-alb-sg"
   description = "Security group for Application Load Balancer"
   vpc_id      = aws_vpc.main.id
