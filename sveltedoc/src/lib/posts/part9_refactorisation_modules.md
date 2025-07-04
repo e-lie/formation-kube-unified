@@ -3,7 +3,7 @@ title: TP partie 9 - Modules et gestion d'état avancée
 weight: 12
 ---
 
-Dans cette neuvième partie, nous allons apprendre à refactoriser notre infrastructure en modules Terraform et maîtriser les techniques avancées de gestion d'état.
+Dans cette neuvième partie, nous allons apprendre à refactoriser notre infrastructure en modules Terraform et maîtriser les techniques avancées de gestion d'état : `terraform state mv` et `terraform import`.
 
 ## Problématiques de la refactorisation
 
