@@ -69,11 +69,69 @@ cp ../part9_refactorisation_modules/outputs.tf .
 rm vpc.tf webserver.tf loadbalancer.tf
 ```
 
+### Commentons le code modularisé
+
+Notre nouvelle configuration `main.tf` est maintenant beaucoup plus lisible et organisée. Au lieu d'avoir toutes les ressources déclarées au même endroit, nous utilisons trois modules distincts :
+
+```coffee
+# Module VPC
+module "vpc" {
+  source = "./modules/vpc"
+  
+  vpc_cidr             = var.vpc_cidr
+  public_subnet_cidr   = var.public_subnet_cidr
+  public_subnet_cidr_2 = var.public_subnet_cidr_2
+  workspace            = terraform.workspace
+  feature_name         = var.feature_name
+  instance_count       = var.instance_count
+}
+
+# Module Webserver
+module "webserver" {
+  source = "./modules/webserver"
+  
+  instance_count      = var.instance_count
+  instance_type       = var.instance_type
+  subnet_id           = module.vpc.public_subnet_ids[0]
+  security_group_id   = module.vpc.web_servers_security_group_id
+  ssh_key_path        = var.ssh_key_path
+  workspace           = terraform.workspace
+  feature_name        = var.feature_name
+}
+
+# Module Load Balancer
+module "loadbalancer" {
+  source = "./modules/loadbalancer"
+  
+  instance_count       = var.instance_count
+  workspace            = terraform.workspace
+  feature_name         = var.feature_name
+  vpc_id               = module.vpc.vpc_id
+  subnet_ids           = module.vpc.public_subnet_ids
+  security_group_ids   = module.vpc.alb_security_group_ids
+  instance_ids         = module.webserver.instance_ids
+}
+```
+
+**Points clés de cette approche modulaire :**
+
+**Séparation des responsabilités :** Chaque module a une responsabilité claire - le VPC gère le réseau, webserver gère les instances, loadbalancer gère la répartition de charge.
+
+**Communication entre modules :** Notez comment les modules communiquent entre eux via les outputs. Par exemple, `module.vpc.public_subnet_ids[0]` permet au module webserver d'utiliser le subnet créé par le module VPC.
+
+**Réutilisabilité :** Ces modules peuvent maintenant être réutilisés dans d'autres projets en changeant simplement les variables d'entrée.
+
+**Lisibilité :** Le fichier principal montre clairement l'architecture globale sans se perdre dans les détails de chaque ressource.
+
+
 ### Test avant migration
 
 Nos modules sont déjà créés dans `modules/` et notre configuration utilise déjà ces modules. Voyons ce que Terraform pense de nos changements :
 
 ```bash
+# Terraform inir est nécessaire quand on créé de nouveau modules
+terraform init
+
 # Voyons ce que Terraform pense de nos changements
 terraform plan -var-file="multi-server.tfvars"
 ```
@@ -158,23 +216,6 @@ terraform plan -var-file="multi-server.tfvars"
 
 Si tout s'est bien passé, le plan devrait montrer "No changes" ou seulement des modifications mineures ! Cela confirme que nos ressources sont maintenant correctement organisées en modules sans risque de destruction.
 
-### Finalisation de la refactorisation
-
-Une fois la migration terminée et validée, nous avons maintenant une infrastructure modulaire fonctionnelle. Si vous souhaitez garder le projet part8 intact, vous pouvez créer une copie finale :
-
-```bash
-# Copions le projet refactorisé vers part9
-cd ..
-cp -r part8_count_loadbalancer part9_refactorisation_modules_final
-
-# Nettoyons le répertoire part9 final
-cd part9_refactorisation_modules_final
-rm -f part8.md architecture.mmd architecture_part8.png alb-components.mmd alb-components.png
-
-# Ajoutons la documentation part9
-cp ../part9_refactorisation_modules/part9.md .
-```
-
 ## terraform import
 
 Parfois, vous avez des ressources AWS créées manuellement ou par d'autres outils que vous voulez intégrer à Terraform. C'est là qu'intervient `terraform import`.
@@ -187,12 +228,11 @@ Supposons que vous ayez créé manuellement un bucket S3 pour stocker des logs o
 
 ```bash
 # Créons un bucket S3 avec un nom unique
-BUCKET_NAME="terraform-demo-logs-$(date +%Y%m%d-%H%M%S)"
-aws s3 mb s3://$BUCKET_NAME --region eu-west-3 --profile <awsprofile-votreprenom>
+aws s3 mb s3://terraform-demo-logs --region eu-west-3 --profile <awsprofile-votreprenom>
 
 # Vérifions que le bucket existe
-aws s3 ls s3://$BUCKET_NAME --profile <awsprofile-votreprenom>
-echo "Bucket créé : $BUCKET_NAME"
+aws s3 ls s3://terraform-demo-logs --profile <awsprofile-votreprenom>
+# bucket vide -> par de sortie
 ```
 
 **Déclaration dans Terraform :**
@@ -202,7 +242,7 @@ Ajoutons maintenant la déclaration de ce bucket dans notre configuration Terraf
 ```coffee
 # Bucket S3 pour les logs (créé manuellement, à importer)
 resource "aws_s3_bucket" "logs" {
-  bucket = "terraform-demo-logs-XXXXXXXX-XXXXXX"  # Remplacez par votre nom de bucket
+  bucket = "terraform-demo-logs"  # Remplacez par votre nom de bucket
 }
 
 resource "aws_s3_bucket_versioning" "logs" {
@@ -217,10 +257,11 @@ resource "aws_s3_bucket_versioning" "logs" {
 
 ```bash
 # Importez le bucket existant
-terraform import aws_s3_bucket.logs $BUCKET_NAME
+terraform import aws_s3_bucket.logs terraform-demo-logs
 
 # Vérifiez que l'import a fonctionné
-terraform plan
+terraform state list
+terraform plan -var-file="multi-server.tfvars" -out=new-bucket.tfplan
 ```
 
 Le plan devrait montrer que Terraform veut ajouter le versioning (qui n'existait pas sur le bucket créé manuellement) mais ne veut pas recréer le bucket lui-même.
@@ -229,13 +270,28 @@ Le plan devrait montrer que Terraform veut ajouter le versioning (qui n'existait
 
 ```bash
 # Appliquez les modifications pour ajouter le versioning
-terraform apply
+terraform apply new-bucket.tfplan
 
 # Vérifiez que tout fonctionne
-terraform show aws_s3_bucket.logs
+terraform state list | grep aws_s3_bucket.logs
 ```
 
 Cette opération intègre une ressource existante dans l'état Terraform, permettant de la gérer ensuite via les fichiers de configuration. C'est particulièrement utile pour intégrer des ressources créées avant l'adoption de Terraform ou par d'autres équipes.
+
+## Validation finale
+
+Une fois la migration terminée, il est important de valider que tout fonctionne correctement :
+
+```bash
+# Plan final - devrait montrer "No changes"
+terraform plan -var-file="multi-server.tfvars"
+
+# Test de l'application
+curl $(terraform output -raw web_url)
+
+# Vérification des modules
+terraform validate
+```
 
 ## Bonnes pratiques pour la gestion d'état
 
@@ -275,22 +331,6 @@ terraform state list > resources-before.txt
 # Après migration, comparez
 terraform state list > resources-after.txt
 diff resources-before.txt resources-after.txt
-```
-
-
-## Validation finale
-
-Une fois la migration terminée, il est important de valider que tout fonctionne correctement :
-
-```bash
-# Plan final - devrait montrer "No changes"
-terraform plan -var-file="multi-server.tfvars"
-
-# Test de l'application
-curl $(terraform output -raw web_url)
-
-# Vérification des modules
-terraform validate
 ```
 
 ## Conclusion
