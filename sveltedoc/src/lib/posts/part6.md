@@ -1,1 +1,0 @@
-../../../../part6_terraform_state_workspaces/part6.md

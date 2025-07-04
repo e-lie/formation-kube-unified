@@ -1,0 +1,41 @@
+graph TB
+    Internet([Internet])
+    
+    subgraph "VPC 10.0.0.0/16"
+        subgraph "Public Subnet 10.0.1.0/24"
+            ALB[Application Load Balancer]
+            
+            subgraph "Web Servers"
+                WS1[Web Server 1<br/>nginx]
+                WS2[Web Server 2<br/>nginx]
+                WS3[Web Server 3<br/>nginx]
+            end
+            
+            SG1[Security Group<br/>ALB]
+            SG2[Security Group<br/>Web Servers]
+        end
+        
+        IGW[Internet Gateway]
+        RT[Route Table]
+    end
+    
+    Internet --> IGW
+    IGW --> ALB
+    ALB --> WS1
+    ALB --> WS2
+    ALB --> WS3
+    
+    SG1 -.-> ALB
+    SG2 -.-> WS1
+    SG2 -.-> WS2
+    SG2 -.-> WS3
+    
+    IGW --> RT
+    RT --> ALB
+    
+    style ALB fill:#e1f5fe
+    style WS1 fill:#f3e5f5
+    style WS2 fill:#f3e5f5
+    style WS3 fill:#f3e5f5
+    style SG1 fill:#fff3e0
+    style SG2 fill:#fff3e0

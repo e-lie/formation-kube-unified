@@ -1,22 +1,21 @@
+import { error } from '@sveltejs/kit';
+
+// This will be populated by the server-side code
+let postsCache = [];
+
 export async function getPosts() {
-  const modules = import.meta.glob('/src/lib/posts/*.md');
-  const posts = [];
-  
-  for (const path in modules) {
-    const mod = await modules[path]();
-    const slug = path.split('/').pop().replace('.md', '');
-    
-    posts.push({
-      slug,
-      metadata: mod.metadata || {},
-      content: mod.default
-    });
-  }
-  
-  // Sort by part number
-  return posts.sort((a, b) => {
-    const numA = parseInt(a.slug.match(/\d+/)?.[0] || '0');
-    const numB = parseInt(b.slug.match(/\d+/)?.[0] || '0');
-    return numA - numB;
-  });
+	return postsCache;
+}
+
+export function getPost(slug) {
+	const post = postsCache.find(p => p.slug === slug);
+	if (!post) {
+		throw error(404, 'Post not found');
+	}
+	return post;
+}
+
+// Server-side function to set posts cache
+export function setPosts(posts) {
+	postsCache = posts;
 }

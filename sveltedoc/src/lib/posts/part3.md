@@ -1,1 +1,0 @@
-../../../../part3_terraform_provisioner/part3.md

@@ -1,0 +1,52 @@
+graph TB
+    subgraph "Internet"
+        Client[Client HTTP]
+    end
+    
+    subgraph "AWS Application Load Balancer"
+        ALB[aws_lb<br/>Load Balancer]
+        Listener[aws_lb_listener<br/>Port 80]
+        TG[aws_lb_target_group<br/>Target Group]
+        
+        ALB --> Listener
+        Listener -->|forward| TG
+    end
+    
+    subgraph "EC2 Instances"
+        TGA1[aws_lb_target_group_attachment<br/>Instance 1]
+        TGA2[aws_lb_target_group_attachment<br/>Instance 2]
+        TGA3[aws_lb_target_group_attachment<br/>Instance 3]
+        
+        EC2_1[aws_instance<br/>Web Server 1]
+        EC2_2[aws_instance<br/>Web Server 2]
+        EC2_3[aws_instance<br/>Web Server 3]
+        
+        TG --> TGA1
+        TG --> TGA2
+        TG --> TGA3
+        
+        TGA1 --> EC2_1
+        TGA2 --> EC2_2
+        TGA3 --> EC2_3
+    end
+    
+    subgraph "Health Checks"
+        HC[Health Check<br/>HTTP / on port 80]
+        TG -.->|monitors| HC
+        HC -.->|checks| EC2_1
+        HC -.->|checks| EC2_2
+        HC -.->|checks| EC2_3
+    end
+    
+    Client -->|HTTP Request| ALB
+    
+    style ALB fill:#e1f5fe
+    style Listener fill:#fff3e0
+    style TG fill:#e8f5e9
+    style TGA1 fill:#f3e5f5
+    style TGA2 fill:#f3e5f5
+    style TGA3 fill:#f3e5f5
+    style EC2_1 fill:#bbdefb
+    style EC2_2 fill:#bbdefb
+    style EC2_3 fill:#bbdefb
+    style HC fill:#ffe0b2

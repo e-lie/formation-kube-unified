@@ -1,1 +1,0 @@
-../../../../part1_simple_aws_server/part1.md
