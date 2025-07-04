@@ -37,7 +37,7 @@ Pour cette démonstration, nous allons partir d'un déploiement existant de la p
 ```bash
 # Assurez-vous d'avoir un état déployé depuis part8
 cd part8_count_loadbalancer
-terraform workspace select default
+terraform workspace select multi-server
 terraform plan -var-file="multi-server.tfvars" -out=tfplan
 terraform apply tfplan
 
@@ -52,8 +52,8 @@ Cette commande vous montrera toutes les ressources déployées, organisées de m
 Nous allons effectuer la refactorisation directement dans le projet part8. Cette approche est plus réaliste car elle utilise le backend S3 configuré :
 
 ```bash
-# Travaillons directement dans part8 pour commencer
-cd part8_count_loadbalancer
+# Travaillons directement depuis la part8 (sur le résultat de tp précédent)
+# faites un commit du résultat avant
 
 # Créons d'abord une sauvegarde de sécurité
 terraform state pull > terraform.tfstate.backup-$(date +%Y%m%d-%H%M%S)
