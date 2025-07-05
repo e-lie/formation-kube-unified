@@ -98,6 +98,15 @@ function processMarkdownContent(content, filename, sourceDirName = '') {
     });
   }
   
+  // Extraire le numéro d'ordre depuis le nom du dossier source
+  let orderNumber = 0;
+  if (sourceDirName) {
+    const threeDigitMatch = sourceDirName.match(/^(\d{3})_/);
+    if (threeDigitMatch) {
+      orderNumber = parseInt(threeDigitMatch[1], 10);
+    }
+  }
+  
   // Générer un titre par défaut si pas présent
   if (!existingFrontmatter.title) {
     existingFrontmatter.title = filename
@@ -108,7 +117,7 @@ function processMarkdownContent(content, filename, sourceDirName = '') {
   }
   
   // Corriger les chemins d'images
-  // Transformer: images/diagram.png → /part4_simple_vpc/images/diagram.png
+  // Transformer: images/diagram.png → /400_simple_vpc/images/diagram.png
   if (sourceDirName) {
     bodyContent = bodyContent.replace(
       /!\[([^\]]*)\]\(images\/([^)]+)\)/g,
@@ -121,7 +130,7 @@ function processMarkdownContent(content, filename, sourceDirName = '') {
     title: existingFrontmatter.title,
     description: existingFrontmatter.description || `Guide ${existingFrontmatter.title}`,
     sidebar: {
-      order: existingFrontmatter.weight || 0
+      order: orderNumber
     }
   };
   

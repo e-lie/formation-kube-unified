@@ -2,7 +2,7 @@
 title: "TP partie 2 - AMI personnalisée avec Packer"
 description: "Guide TP partie 2 - AMI personnalisée avec Packer"
 sidebar:
-  order: 5
+  order: 200
 ---
 
 

@@ -2,7 +2,7 @@
 title: "TP partie 1 - server simple avec AWS"
 description: "Guide TP partie 1 - server simple avec AWS"
 sidebar:
-  order: 4
+  order: 100
 ---
 
 

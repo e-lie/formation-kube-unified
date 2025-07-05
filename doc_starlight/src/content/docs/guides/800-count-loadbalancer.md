@@ -2,7 +2,7 @@
 title: "TP partie 8 - Count, for_each et haute disponibilité"
 description: "Guide TP partie 8 - Count, for_each et haute disponibilité"
 sidebar:
-  order: 11
+  order: 800
 ---
 
 
