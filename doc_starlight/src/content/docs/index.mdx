@@ -1,0 +1,83 @@
+---
+title: Formation Terraform avec AWS
+description: Guide complet pour apprendre Terraform avec AWS - de l'installation aux modules avancés
+template: splash
+hero:
+  tagline: Apprenez Terraform de zéro avec des exercices pratiques AWS !
+  image:
+    alt: Terraform + AWS
+    file: ../../assets/houston.webp
+  actions:
+    - text: Commencer la formation
+      link: /guides/part1-simple-aws-server/
+      icon: right-arrow
+      variant: primary
+    - text: Voir sur GitHub
+      link: https://github.com/votre-username/formation-terraform
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Contenu de la formation
+
+Cette formation vous accompagne pas à pas dans l'apprentissage de Terraform avec AWS. Chaque partie inclut de la théorie, des exercices pratiques et des exemples concrets.
+
+<CardGrid stagger>
+	<Card title="🚀 Bases de Terraform" icon="rocket">
+		- Installation et configuration
+		- Premier déploiement AWS
+		- Providers et ressources
+		- **TP1** : Serveur simple avec AWS
+	</Card>
+	<Card title="🔧 Configuration avancée" icon="setting">
+		- Images personnalisées avec Packer
+		- Provisioners SSH
+		- VPC et networking
+		- **TP2-4** : Infrastructure réseau complète
+	</Card>
+	<Card title="📁 Organisation des projets" icon="open-book">
+		- Structure des fichiers
+		- Variables et outputs
+		- Workspaces et environnements
+		- **TP5-6** : Projets structurés
+	</Card>
+	<Card title="🤝 Collaboration" icon="github">
+		- Backend S3 distant
+		- État partagé
+		- CI/CD avec Terraform
+		- **TP7** : Travail en équipe
+	</Card>
+	<Card title="⚡ Haute disponibilité" icon="star">
+		- Count et for_each
+		- Load balancers
+		- Auto-scaling
+		- **TP8** : Infrastructure résiliente
+	</Card>
+	<Card title="🧩 Modules et réutilisabilité" icon="puzzle">
+		- Création de modules
+		- Gestion d'état avancée
+		- Refactorisation
+		- **TP9** : Modules personnalisés
+	</Card>
+</CardGrid>
+
+## Prérequis
+
+- Compte AWS (free tier suffisant)
+- Connaissance de base de Linux/Bash
+- Notions de networking (IP, DNS, ports)
+- Aucune expérience Terraform requise !
+
+## Structure des TP
+
+Chaque TP suit la même structure :
+1. **Théorie** : Concepts expliqués simplement
+2. **Pratique** : Exercices guidés étape par étape
+3. **Code** : Exemples complets commentés
+4. **Vérification** : Tests de bon fonctionnement
+
+---
+
+**Prêt à commencer ?** [Lancez-vous avec le TP1 →](/guides/part1-simple-aws-server/)

@@ -1,0 +1,23 @@
+{
+  "name": "doc_starlight",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "npm run sync-docs && concurrently \"npm run sync-docs:watch\" \"astro dev\"",
+    "start": "npm run dev",
+    "build": "npm run sync-docs && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "sync-docs": "node sync-docs.js",
+    "sync-docs:watch": "node sync-docs.js --watch"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.34.4",
+    "astro": "^5.6.1",
+    "sharp": "^0.34.2"
+  },
+  "devDependencies": {
+    "chokidar": "^4.0.1",
+    "concurrently": "^9.1.0"
+  }
+}
