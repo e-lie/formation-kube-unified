@@ -52,9 +52,6 @@
               class:active={currentSlug === doc.slug}
             >
               <span class="nav-item-title">{doc.title}</span>
-              {#if doc.weight && doc.weight < 100}
-                <span class="nav-item-badge">Partie {doc.weight}</span>
-              {/if}
             </a>
           {/each}
         </div>
@@ -190,20 +187,6 @@
     white-space: nowrap;
   }
   
-  .nav-item-badge {
-    font-size: 0.75rem;
-    color: var(--sk-text-3);
-    background: var(--sk-back-3);
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
-    flex-shrink: 0;
-    margin-left: 0.5rem;
-  }
-  
-  .nav-item.active .nav-item-badge {
-    background: color-mix(in srgb, var(--sk-theme-1) 15%, transparent);
-    color: var(--sk-theme-1);
-  }
   
   .nav-item.external svg {
     opacity: 0.5;

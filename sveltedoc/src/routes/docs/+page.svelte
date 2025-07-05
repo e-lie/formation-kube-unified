@@ -15,9 +15,6 @@
       <a href="/docs/{doc.slug}" class="doc-card">
         <div class="doc-card-header">
           <h3>{doc.title}</h3>
-          {#if doc.weight && doc.weight < 100}
-            <span class="doc-badge">Partie {doc.weight}</span>
-          {/if}
         </div>
         <div class="doc-card-content">
           {#if doc.metadata.description}
@@ -116,15 +113,6 @@
     flex: 1;
   }
 
-  .doc-badge {
-    font-size: 0.75rem;
-    color: var(--sk-theme-1);
-    background: color-mix(in srgb, var(--sk-theme-1) 10%, transparent);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    flex-shrink: 0;
-    font-weight: 500;
-  }
 
   .doc-card-content p {
     color: var(--sk-text-2);

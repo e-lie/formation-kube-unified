@@ -14,11 +14,6 @@
 {#if doc}
   <article class="doc-article">
     <header class="doc-header">
-      <div class="doc-meta">
-        {#if doc.weight && doc.weight < 100}
-          <span class="doc-badge">Partie {doc.weight}</span>
-        {/if}
-      </div>
       <h1 class="doc-title">{doc.title}</h1>
       {#if doc.metadata.description}
         <p class="doc-description">{doc.metadata.description}</p>
@@ -68,18 +63,6 @@
     border-bottom: 1px solid var(--sk-line);
   }
 
-  .doc-meta {
-    margin-bottom: 1rem;
-  }
-
-  .doc-badge {
-    font-size: 0.75rem;
-    color: var(--sk-theme-1);
-    background: color-mix(in srgb, var(--sk-theme-1) 10%, transparent);
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
-    font-weight: 500;
-  }
 
   .doc-title {
     font-size: 2.5rem;
