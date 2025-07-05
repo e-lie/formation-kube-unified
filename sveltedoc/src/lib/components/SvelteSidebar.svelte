@@ -56,25 +56,6 @@
           {/each}
         </div>
       </div>
-      
-      <!-- Additional sections can go here -->
-      <div class="nav-section">
-        <h3 class="nav-title">Ressources</h3>
-        <div class="nav-items">
-          <a href="https://terraform.io" class="nav-item external" target="_blank" rel="noopener">
-            <span class="nav-item-title">Terraform.io</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-            </svg>
-          </a>
-          <a href="https://aws.amazon.com" class="nav-item external" target="_blank" rel="noopener">
-            <span class="nav-item-title">AWS Documentation</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/>
-            </svg>
-          </a>
-        </div>
-      </div>
     </nav>
   </div>
 </aside>

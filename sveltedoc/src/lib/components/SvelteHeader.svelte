@@ -34,13 +34,6 @@
     </div>
     
     <nav class="header-nav">
-      <a 
-        href="/docs" 
-        class="nav-link"
-        class:active={isDocsPage}
-      >
-        Documentation
-      </a>
       <a href="https://github.com" class="nav-link external" target="_blank" rel="noopener">
         GitHub
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
