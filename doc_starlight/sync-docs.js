@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
+import { readFileSync, writeFileSync, copyFileSync, mkdirSync, existsSync, readdirSync, unlinkSync, rmSync } from 'fs';
 import { join, dirname, relative, basename } from 'path';
 import { fileURLToPath } from 'url';
 import chokidar from 'chokidar';
@@ -25,6 +25,7 @@ const FILE_MAPPING = {
   'part7_backend_s3/part7.md': 'guides/part7-backend-s3.md',
   'part8_count_loadbalancer/part8.md': 'guides/part8-count-loadbalancer.md',
   'part9_refactorisation_modules/part9.md': 'guides/part9-refactorisation-modules.md',
+  'part10_test/part10.md': 'guides/part10-test.md',
   'partmaybe_vpc_networking/part7.md': 'guides/partmaybe-vpc-networking.md'
 };
 
@@ -131,9 +132,73 @@ function syncImageFile(sourcePath, targetPath) {
   }
 }
 
+// Fonction pour nettoyer les fichiers orphelins
+function cleanupOrphanedFiles() {
+  console.log('🧹 Cleaning up orphaned files...');
+  
+  // Nettoyer les fichiers markdown orphelins
+  if (existsSync(TARGET_DIR)) {
+    try {
+      const targetFiles = readdirSync(join(TARGET_DIR, 'guides'), { withFileTypes: true })
+        .filter(dirent => dirent.isFile() && dirent.name.endsWith('.md'))
+        .map(dirent => dirent.name);
+      
+      const expectedFiles = Object.values(FILE_MAPPING).map(path => basename(path));
+      
+      targetFiles.forEach(file => {
+        if (!expectedFiles.includes(file)) {
+          const filePath = join(TARGET_DIR, 'guides', file);
+          console.log(`🗑️  Removing orphaned markdown: ${file}`);
+          unlinkSync(filePath);
+        }
+      });
+    } catch (error) {
+      console.warn('⚠️  Could not clean up markdown files:', error.message);
+    }
+  }
+  
+  // Nettoyer les images orphelines
+  const imageFolders = [
+    'part4_simple_vpc/images',
+    'part8_count_loadbalancer/images', 
+    'partmaybe_vpc_networking/images'
+  ];
+  
+  imageFolders.forEach(folder => {
+    const targetFolder = join(TARGET_PUBLIC_DIR, folder);
+    const sourceFolder = join(SOURCE_DIR, folder);
+    
+    if (existsSync(targetFolder)) {
+      try {
+        const targetImages = readdirSync(targetFolder);
+        const sourceImages = existsSync(sourceFolder) ? readdirSync(sourceFolder) : [];
+        
+        targetImages.forEach(image => {
+          if (!sourceImages.includes(image)) {
+            const imagePath = join(targetFolder, image);
+            console.log(`🗑️  Removing orphaned image: ${relative(TARGET_PUBLIC_DIR, imagePath)}`);
+            unlinkSync(imagePath);
+          }
+        });
+        
+        // Supprimer le dossier s'il est vide
+        if (readdirSync(targetFolder).length === 0) {
+          console.log(`🗑️  Removing empty folder: ${relative(TARGET_PUBLIC_DIR, targetFolder)}`);
+          rmSync(targetFolder, { recursive: true });
+        }
+      } catch (error) {
+        console.warn(`⚠️  Could not clean up images in ${folder}:`, error.message);
+      }
+    }
+  });
+}
+
 // Fonction pour synchroniser tous les fichiers
 function syncAllFiles() {
   console.log('🔄 Syncing all files...');
+  
+  // Nettoyer les fichiers orphelins d'abord
+  cleanupOrphanedFiles();
   
   // Synchroniser les fichiers markdown
   Object.entries(FILE_MAPPING).forEach(([source, target]) => {
@@ -142,6 +207,8 @@ function syncAllFiles() {
     
     if (existsSync(sourcePath)) {
       syncMarkdownFile(sourcePath, targetPath);
+    } else {
+      console.log(`⚠️  Source file not found: ${source}`);
     }
   });
   
@@ -206,12 +273,45 @@ function startFileWatcher() {
     syncImageFile(sourcePath, targetPath);
   });
   
+  markdownWatcher.on('unlink', (sourcePath) => {
+    const relativePath = relative(SOURCE_DIR, sourcePath);
+    const targetPath = join(TARGET_DIR, FILE_MAPPING[relativePath]);
+    
+    if (targetPath && existsSync(targetPath)) {
+      console.log(`\n🗑️  File removed: ${relativePath}`);
+      unlinkSync(targetPath);
+      console.log(`✅ Removed target file: ${relative(__dirname, targetPath)}`);
+    }
+  });
+
   imageWatcher.on('add', (sourcePath) => {
     const relativePath = relative(SOURCE_DIR, sourcePath);
     const targetPath = join(TARGET_PUBLIC_DIR, relativePath);
     
     console.log(`\n🆕 New image: ${relativePath}`);
     syncImageFile(sourcePath, targetPath);
+  });
+
+  imageWatcher.on('unlink', (sourcePath) => {
+    const relativePath = relative(SOURCE_DIR, sourcePath);
+    const targetPath = join(TARGET_PUBLIC_DIR, relativePath);
+    
+    if (existsSync(targetPath)) {
+      console.log(`\n🗑️  Image removed: ${relativePath}`);
+      unlinkSync(targetPath);
+      console.log(`✅ Removed target image: ${relative(__dirname, targetPath)}`);
+      
+      // Supprimer le dossier parent s'il est vide
+      const parentDir = dirname(targetPath);
+      try {
+        if (readdirSync(parentDir).length === 0) {
+          console.log(`🗑️  Removing empty folder: ${relative(TARGET_PUBLIC_DIR, parentDir)}`);
+          rmSync(parentDir, { recursive: true });
+        }
+      } catch (error) {
+        // Ignore errors when checking/removing parent directory
+      }
+    }
   });
   
   console.log('✅ File watcher started');
