@@ -62,20 +62,97 @@ pre {
   padding: 1rem;
   font-size: 0.875rem;
   line-height: 1.5;
+  background: #0d1117 !important;
+  border: 1px solid var(--sk-line);
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+/* Basic markdown code styling for non-highlighted code */
+pre code {
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: #e6edf3 !important;
+  font-family: inherit;
+}
+
+/* Language-specific syntax highlighting styles */
+pre code.language-coffee,
+pre code.language-bash,
+pre code.language-sh,
+pre code.language-hcl,
+pre code.language-terraform {
+  color: #e6edf3 !important;
+}
+
+/* Terraform/HCL specific highlighting */
+pre code.language-coffee .token.keyword,
+pre code.language-hcl .token.keyword,
+pre code.language-terraform .token.keyword {
+  color: #ff79c6;
+}
+
+pre code.language-coffee .token.string,
+pre code.language-hcl .token.string,
+pre code.language-terraform .token.string {
+  color: #50fa7b;
+}
+
+pre code.language-coffee .token.number,
+pre code.language-hcl .token.number,
+pre code.language-terraform .token.number {
+  color: #bd93f9;
+}
+
+/* Bash highlighting */
+pre code.language-bash .token.function,
+pre code.language-sh .token.function {
+  color: #8be9fd;
+}
+
+pre code.language-bash .token.string,
+pre code.language-sh .token.string {
+  color: #f1fa8c;
+}
+
+/* Shiki code blocks (when properly generated) */
+pre.shiki {
+  background: #0d1117 !important;
+  color: #e6edf3 !important;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+/* Preserve Shiki token colors */
+pre.shiki .token {
+  color: inherit;
+}
+
+/* Override any conflicting styles */
+pre.shiki code {
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: inherit !important;
 }
 
 code {
-  font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
   font-size: 0.875rem;
 }
 
 /* Inline code */
 p code, li code {
-  background: #f7fafc;
-  color: #e53e3e;
+  background: var(--sk-back-3);
+  color: var(--sk-text-1);
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-size: 0.875rem;
+  border: 1px solid var(--sk-line);
 }
 
 /* Markdown content styling */

@@ -169,11 +169,6 @@
   }
   
   
-  .nav-item.external svg {
-    opacity: 0.5;
-    margin-left: 0.5rem;
-  }
-  
   @media (min-width: 1024px) {
     .overlay {
       display: none;

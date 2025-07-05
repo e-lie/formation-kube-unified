@@ -131,10 +131,6 @@
     background: var(--sk-back-3);
   }
   
-  .nav-link.active {
-    color: var(--sk-theme-1);
-    background: color-mix(in srgb, var(--sk-theme-1) 10%, transparent);
-  }
   
   .nav-link.external svg {
     opacity: 0.6;
