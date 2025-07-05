@@ -35,7 +35,7 @@ Notre objectif est de créer une infrastructure avec :
 - **Health checks** automatiques
 - Configuration dynamique basée sur le nombre d'instances
 
-![Architecture Part 8 - Load Balancer et haute disponibilité](images/architecture_part8.png)
+![Architecture Part 8 - Load Balancer et haute disponibilité](/part8_count_loadbalancer/images/architecture_part8.png)
 
 ## Implémentation avec count
 
@@ -195,7 +195,7 @@ https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/lb
 
 Un ALB est composé de plusieurs ressources Terraform interconnectées :
 
-![Composants ALB - Relations entre ressources Terraform](images/alb-components.png)
+![Composants ALB - Relations entre ressources Terraform](/part8_count_loadbalancer/images/alb-components.png)
 
 **Ressources principales :**
 - **aws_lb** : Le load balancer principal qui reçoit le trafic

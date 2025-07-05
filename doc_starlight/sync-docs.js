@@ -29,7 +29,7 @@ const FILE_MAPPING = {
 };
 
 // Fonction pour extraire le frontmatter et ajouter les métadonnées Starlight
-function processMarkdownContent(content, filename) {
+function processMarkdownContent(content, filename, sourceDirName = '') {
   // Extraire le frontmatter existant s'il y en a un
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   
@@ -60,6 +60,15 @@ function processMarkdownContent(content, filename) {
       .replace(/\b\w/g, l => l.toUpperCase());
   }
   
+  // Corriger les chemins d'images
+  // Transformer: images/diagram.png → /part4_simple_vpc/images/diagram.png
+  if (sourceDirName) {
+    bodyContent = bodyContent.replace(
+      /!\[([^\]]*)\]\(images\/([^)]+)\)/g,
+      `![$1](/${sourceDirName}/images/$2)`
+    );
+  }
+  
   // Ajouter des métadonnées Starlight
   const starlightFrontmatter = {
     title: existingFrontmatter.title,
@@ -88,7 +97,12 @@ function syncMarkdownFile(sourcePath, targetPath) {
     console.log(`📄 Syncing: ${relative(ROOT_DIR, sourcePath)} → ${relative(__dirname, targetPath)}`);
     
     const content = readFileSync(sourcePath, 'utf-8');
-    const processedContent = processMarkdownContent(content, basename(sourcePath));
+    
+    // Extraire le nom du dossier source pour les chemins d'images
+    const sourceDir = dirname(sourcePath);
+    const sourceDirName = basename(sourceDir);
+    
+    const processedContent = processMarkdownContent(content, basename(sourcePath), sourceDirName);
     
     // Créer le répertoire cible si nécessaire
     mkdirSync(dirname(targetPath), { recursive: true });

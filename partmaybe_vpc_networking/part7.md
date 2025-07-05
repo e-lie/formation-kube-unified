@@ -1,5 +1,5 @@
 ---
-title: TP partie 5 - Architecture VPC avancée multi-AZ
+title: TP partie 1000 - Architecture VPC avancée multi-AZ
 weight: 8
 ---
 

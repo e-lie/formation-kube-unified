@@ -1,6 +1,6 @@
 ---
-title: "TP partie 5 - Architecture VPC avancée multi-AZ"
-description: "Guide TP partie 5 - Architecture VPC avancée multi-AZ"
+title: "TP partie 1000 - Architecture VPC avancée multi-AZ"
+description: "Guide TP partie 1000 - Architecture VPC avancée multi-AZ"
 sidebar:
   order: 8
 ---
