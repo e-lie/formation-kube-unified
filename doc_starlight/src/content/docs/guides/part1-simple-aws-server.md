@@ -18,7 +18,7 @@ Créez un dossier TP1 et ouvrez le dans VSCode. Créez à l'intérieur un fichie
 
 - Ajoutez un fichier `.gitignore` avec le contenu suivant adapté à terraform :
 
-```
+```ini
 # Local .terraform directories
 **/.terraform/*
 
@@ -93,7 +93,7 @@ Une autre méthode classique, souvent plus simple et sécure consiste a utiliser
 
 - Vérifiez que vous avez bien un profil awscli a votre nom préconfiguré sur la VM en lançant:
 
-```
+```sh
 aws configure list-profiles
 aws s3 ls --profile <votreprenom> # ne devrait pas renvoyer d'erreur (rien du tout en fait)
 ```
@@ -200,4 +200,6 @@ Executons et observons le résultat des commandes classiques
 
 Pour vérifier que notre serveur a bien été créé on peut utiliser la CLI: 
 
-`aws ec2 describe-instances --profile votreprenom`
+```sh
+aws ec2 describe-instances --profile votreprenom`
+```
