@@ -14,6 +14,10 @@ const SOURCE_DIR = ROOT_DIR;
 const TARGET_DIR = join(__dirname, 'src/content/docs');
 const TARGET_PUBLIC_DIR = join(__dirname, 'public');
 
+// Base path pour GitHub Pages (à synchroniser avec astro.config.mjs)
+// Avec un domaine custom, pas besoin de base path
+const BASE_PATH = process.env.BASE_PATH || '';
+
 // Fonction pour découvrir automatiquement les dossiers avec pattern 3 chiffres
 function discoverDirectories() {
   const mapping = {};
@@ -117,11 +121,11 @@ function processMarkdownContent(content, filename, sourceDirName = '') {
   }
   
   // Corriger les chemins d'images
-  // Transformer: images/diagram.png → /400_simple_vpc/images/diagram.png
+  // Transformer: images/diagram.png → /formation-terraform-unified/400_simple_vpc/images/diagram.png
   if (sourceDirName) {
     bodyContent = bodyContent.replace(
       /!\[([^\]]*)\]\(images\/([^)]+)\)/g,
-      `![$1](/${sourceDirName}/images/$2)`
+      `![$1](${BASE_PATH}/${sourceDirName}/images/$2)`
     );
   }
   
