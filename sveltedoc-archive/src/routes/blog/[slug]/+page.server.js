@@ -9,3 +9,8 @@ export async function load({ params }) {
   
   return { post };
 }
+
+export function entries() {
+  const posts = loadPosts();
+  return posts.map(post => ({ slug: post.slug }));
+}
