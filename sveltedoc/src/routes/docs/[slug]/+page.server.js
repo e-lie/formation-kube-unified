@@ -1,4 +1,4 @@
-import { getDoc, loadDocs } from '$lib/docs.js';
+import { getDoc, loadDocs } from '$lib/docs-static.js';
 import { error } from '@sveltejs/kit';
 
 export async function load({ params }) {

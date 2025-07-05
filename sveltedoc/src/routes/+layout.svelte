@@ -1,29 +1,12 @@
 <script>
-  import { onMount } from 'svelte';
-  import { browser } from '$app/environment';
   import { page } from '$app/stores';
   import SvelteHeader from '$lib/components/SvelteHeader.svelte';
   import SvelteSidebar from '$lib/components/SvelteSidebar.svelte';
-  import { fileWatcher } from '$lib/file-watcher.js';
   import '../app.css';
 
   let { children, data } = $props();
   let docs = $state(data.docs || []);
   let sidebarOpen = $state(false);
-
-  // Load docs
-  onMount(async () => {
-    if (browser) {
-      // Start file watcher in development
-      if (import.meta.env.DEV) {
-        try {
-          await fileWatcher.start();
-        } catch (error) {
-          console.warn('File watcher not available:', error);
-        }
-      }
-    }
-  });
 
   // Reactive updates
   const isDocsPage = $derived($page.url.pathname.startsWith('/docs'));
