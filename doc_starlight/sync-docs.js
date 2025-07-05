@@ -14,20 +14,66 @@ const SOURCE_DIR = ROOT_DIR;
 const TARGET_DIR = join(__dirname, 'src/content/docs');
 const TARGET_PUBLIC_DIR = join(__dirname, 'public');
 
-// Configuration de mapping des fichiers
-const FILE_MAPPING = {
-  'part1_simple_aws_server/part1.md': 'guides/part1-simple-aws-server.md',
-  'part2_packer_ami/part2.md': 'guides/part2-packer-ami.md', 
-  'part3_terraform_provisioner/part3.md': 'guides/part3-terraform-provisioner.md',
-  'part4_simple_vpc/part4.md': 'guides/part4-simple-vpc.md',
-  'part5_terraform_organization/part5.md': 'guides/part5-terraform-organization.md',
-  'part6_terraform_state_workspaces/part6.md': 'guides/part6-terraform-state-workspaces.md',
-  'part7_backend_s3/part7.md': 'guides/part7-backend-s3.md',
-  'part8_count_loadbalancer/part8.md': 'guides/part8-count-loadbalancer.md',
-  'part9_refactorisation_modules/part9.md': 'guides/part9-refactorisation-modules.md',
-  'part10_test/part10.md': 'guides/part10-test.md',
-  'partmaybe_vpc_networking/part7.md': 'guides/partmaybe-vpc-networking.md'
-};
+// Fonction pour découvrir automatiquement les dossiers avec pattern 3 chiffres
+function discoverDirectories() {
+  const mapping = {};
+  
+  try {
+    const items = readdirSync(SOURCE_DIR, { withFileTypes: true });
+    const directories = items.filter(dirent => dirent.isDirectory());
+    
+    directories.forEach(dir => {
+      const dirName = dir.name;
+      
+      // Pattern pour dossiers commençant par 3 chiffres
+      const threeDigitMatch = dirName.match(/^(\d{3})_(.*)/);
+      if (threeDigitMatch) {
+        const [, digits, name] = threeDigitMatch;
+        const dirPath = join(SOURCE_DIR, dirName);
+        
+        // Chercher le premier fichier markdown dans ce dossier
+        try {
+          const files = readdirSync(dirPath);
+          const markdownFile = files.find(file => file.endsWith('.md'));
+          
+          if (markdownFile) {
+            const sourcePath = `${dirName}/${markdownFile}`;
+            const targetPath = `guides/${dirName.toLowerCase().replace(/_/g, '-')}.md`;
+            mapping[sourcePath] = targetPath;
+          }
+        } catch (error) {
+          console.warn(`⚠️  Could not read directory ${dirName}:`, error.message);
+        }
+      }
+      
+      // Garder le pattern spécial pour partmaybe_vpc_networking
+      if (dirName === 'partmaybe_vpc_networking') {
+        const dirPath = join(SOURCE_DIR, dirName);
+        try {
+          const files = readdirSync(dirPath);
+          const markdownFile = files.find(file => file.endsWith('.md'));
+          
+          if (markdownFile) {
+            const sourcePath = `${dirName}/${markdownFile}`;
+            const targetPath = `guides/${dirName.toLowerCase().replace(/_/g, '-')}.md`;
+            mapping[sourcePath] = targetPath;
+          }
+        } catch (error) {
+          console.warn(`⚠️  Could not read directory ${dirName}:`, error.message);
+        }
+      }
+    });
+    
+    console.log('📁 Discovered directories:', Object.keys(mapping));
+    return mapping;
+  } catch (error) {
+    console.error('❌ Error discovering directories:', error.message);
+    return {};
+  }
+}
+
+// Configuration de mapping des fichiers (généré dynamiquement)
+const FILE_MAPPING = discoverDirectories();
 
 // Fonction pour extraire le frontmatter et ajouter les métadonnées Starlight
 function processMarkdownContent(content, filename, sourceDirName = '') {
@@ -157,12 +203,19 @@ function cleanupOrphanedFiles() {
     }
   }
   
-  // Nettoyer les images orphelines
-  const imageFolders = [
-    'part4_simple_vpc/images',
-    'part8_count_loadbalancer/images', 
-    'partmaybe_vpc_networking/images'
-  ];
+  // Nettoyer les images orphelines - découvrir automatiquement les dossiers d'images
+  const imageFolders = [];
+  
+  // Chercher les dossiers d'images dans tous les dossiers découverts
+  Object.keys(FILE_MAPPING).forEach(sourcePath => {
+    const dirName = dirname(sourcePath);
+    const imageFolder = join(dirName, 'images');
+    const fullImagePath = join(SOURCE_DIR, imageFolder);
+    
+    if (existsSync(fullImagePath)) {
+      imageFolders.push(imageFolder);
+    }
+  });
   
   imageFolders.forEach(folder => {
     const targetFolder = join(TARGET_PUBLIC_DIR, folder);
@@ -212,22 +265,19 @@ function syncAllFiles() {
     }
   });
   
-  // Synchroniser les images
-  const imageFolders = [
-    'part4_simple_vpc/images',
-    'part8_count_loadbalancer/images', 
-    'partmaybe_vpc_networking/images'
-  ];
-  
-  imageFolders.forEach(folder => {
-    const sourceFolder = join(SOURCE_DIR, folder);
-    if (existsSync(sourceFolder)) {
-      const files = readdirSync(sourceFolder);
+  // Synchroniser les images - découvrir automatiquement les dossiers d'images
+  Object.keys(FILE_MAPPING).forEach(sourcePath => {
+    const dirName = dirname(sourcePath);
+    const imageFolder = join(dirName, 'images');
+    const fullImagePath = join(SOURCE_DIR, imageFolder);
+    
+    if (existsSync(fullImagePath)) {
+      const files = readdirSync(fullImagePath);
       files.forEach(file => {
         if (file.match(/\.(png|jpg|jpeg|gif|svg|webp)$/i)) {
-          const sourcePath = join(sourceFolder, file);
-          const targetPath = join(TARGET_PUBLIC_DIR, folder, file);
-          syncImageFile(sourcePath, targetPath);
+          const sourceImagePath = join(fullImagePath, file);
+          const targetImagePath = join(TARGET_PUBLIC_DIR, imageFolder, file);
+          syncImageFile(sourceImagePath, targetImagePath);
         }
       });
     }
@@ -247,10 +297,15 @@ function startFileWatcher() {
     ignoreInitial: true
   });
   
-  // Watcher pour les images
-  const imageWatcher = chokidar.watch([
-    join(SOURCE_DIR, 'part*/images/*.{png,jpg,jpeg,gif,svg,webp}')
-  ], {
+  // Watcher pour les images - découvrir automatiquement les patterns
+  const imagePatterns = [];
+  Object.keys(FILE_MAPPING).forEach(sourcePath => {
+    const dirName = dirname(sourcePath);
+    const imagePattern = join(SOURCE_DIR, dirName, 'images/*.{png,jpg,jpeg,gif,svg,webp}');
+    imagePatterns.push(imagePattern);
+  });
+  
+  const imageWatcher = chokidar.watch(imagePatterns, {
     persistent: true,
     ignoreInitial: true
   });
