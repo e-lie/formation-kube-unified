@@ -4,14 +4,14 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://votre-username.github.io',
-	base: '/formation-terraform',
+	site: 'https://e-lie.github.io',
+	base: '/formation-terraform-unified',
 	integrations: [
 		starlight({
 			title: 'Formation Terraform',
 			description: 'Guide complet pour apprendre Terraform avec AWS',
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/votre-username/formation-terraform' }
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/e-lie/formation-terraform-unified' }
 			],
 			sidebar: [
 				{
