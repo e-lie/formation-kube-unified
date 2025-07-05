@@ -1,7 +1,7 @@
 <script>
-  export let data;
+  let { data } = $props();
   
-  $: doc = data.doc;
+  const doc = $derived(data.doc);
 </script>
 
 <svelte:head>

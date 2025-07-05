@@ -4,13 +4,12 @@
   import { page } from '$app/stores';
   import SvelteHeader from '$lib/components/SvelteHeader.svelte';
   import SvelteSidebar from '$lib/components/SvelteSidebar.svelte';
-  import { loadDocs } from '$lib/docs.js';
   import { fileWatcher } from '$lib/file-watcher.js';
   import '../app.css';
 
-  let { children } = $props();
-  let docs = [];
-  let sidebarOpen = false;
+  let { children, data } = $props();
+  let docs = $state(data.docs || []);
+  let sidebarOpen = $state(false);
 
   // Load docs
   onMount(async () => {
@@ -23,9 +22,6 @@
           console.warn('File watcher not available:', error);
         }
       }
-      
-      // Load documentation
-      docs = loadDocs();
     }
   });
 

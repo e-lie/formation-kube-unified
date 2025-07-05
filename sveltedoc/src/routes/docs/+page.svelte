@@ -1,12 +1,7 @@
 <script>
-  import { loadDocs } from '$lib/docs.js';
-  import { onMount } from 'svelte';
-
-  let docs = [];
-
-  onMount(() => {
-    docs = loadDocs();
-  });
+  let { data } = $props();
+  
+  const docs = $derived(data.docs);
 </script>
 
 <div class="docs-index">
