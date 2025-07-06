@@ -1,3 +1,4 @@
+# main-infrastructure/variables.tf
 variable "aws_region" {
   description = "AWS region"
   type        = string
@@ -41,9 +42,4 @@ variable "feature_name" {
 variable "instance_count" {
   description = "Number of web server instances"
   type        = number
-}
-
-variable "environment" {
-  description = "Environment name"
-  type        = string
 }

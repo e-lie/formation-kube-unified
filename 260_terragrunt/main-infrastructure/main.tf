@@ -1,22 +1,15 @@
-# Configuration du provider AWS
-provider "aws" {
-  region  = var.aws_region
-  profile = var.aws_profile
-}
-
-# Module VPC
+# main-infrastructure/main.tf
 module "vpc" {
   source = "../modules/vpc"
   
   vpc_cidr             = var.vpc_cidr
   public_subnet_cidr   = var.public_subnet_cidr
   public_subnet_cidr_2 = var.public_subnet_cidr_2
-  workspace            = var.environment
+  workspace            = var.feature_name
   feature_name         = var.feature_name
   instance_count       = var.instance_count
 }
 
-# Module Webserver
 module "webserver" {
   source = "../modules/webserver"
   
@@ -25,16 +18,15 @@ module "webserver" {
   subnet_id         = module.vpc.public_subnet_ids[0]
   security_group_id = module.vpc.web_servers_security_group_id
   ssh_key_path      = var.ssh_key_path
-  workspace         = var.environment
+  workspace         = var.feature_name
   feature_name      = var.feature_name
 }
 
-# Module Load Balancer
 module "loadbalancer" {
   source = "../modules/loadbalancer"
   
   instance_count     = var.instance_count
-  workspace          = var.environment
+  workspace          = var.feature_name
   feature_name       = var.feature_name
   vpc_id             = module.vpc.vpc_id
   subnet_ids         = module.vpc.public_subnet_ids

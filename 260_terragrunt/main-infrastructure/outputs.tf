@@ -1,3 +1,4 @@
+# main-infrastructure/outputs.tf
 output "vpc_id" {
   description = "ID du VPC"
   value       = module.vpc.vpc_id
