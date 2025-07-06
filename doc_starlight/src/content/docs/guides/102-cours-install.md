@@ -1,0 +1,63 @@
+---
+title: "Cours - Installation et versions de Terraform"
+description: "Guide Cours - Installation et versions de Terraform"
+sidebar:
+  order: 102
+---
+
+
+## Objectifs 
+- Appréhender les outils qu'on utilisera au cours de la formation
+
+---
+
+## Les outils de la formation 
+
+### Les outils classiques 
+
+Nous utiliserons beaucoup durant la formations les outils suivants. 
+
+* Desktop via guacamole / VNC
+* IDE : vscode / codium
+* terminal
+* git
+
+---
+
+### Les outils utiles pour gérer terraform  
+
+* terraform 
+* tfenv (standard avant opentofu)
+* tenv (gère les versions de terraform et opentofu de façon consistante)
+ 
+Avec quelques utilitaires supplémentaires
+* jq
+* dot / graphviz (pour exploiter la commande terraform graph)
+* kubectl (lorsqu'on travaille en combinaison avec Kubernetes)
+
+---
+
+## AWS 
+
+* l'utilitaire aws en ligne de commande 
+
+Et quelques concepts importants 
+* IAM
+* User ID / Access Key / Access Key Secret 
+* Regions
+* Virtual Private Cloud
+* AMI
+* instance 
+* load balancer 
+
+---
+
+## En pratique
+
+Utilisons le script d'installation : `/opt/terraform.sh`
+
+- le lire : installe tenv et d'autres outils de dev via asdf (gestionnaire de paquet multiplateforme fait pour ça)
+
+- le lancer avec bash
+
+

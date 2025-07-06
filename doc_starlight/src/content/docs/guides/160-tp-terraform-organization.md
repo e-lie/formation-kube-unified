@@ -2,7 +2,7 @@
 title: "TP partie 5 - Organisation et structure des projets Terraform"
 description: "Guide TP partie 5 - Organisation et structure des projets Terraform"
 sidebar:
-  order: 500
+  order: 160
 ---
 
 

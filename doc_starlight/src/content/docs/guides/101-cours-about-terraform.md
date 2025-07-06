@@ -1,8 +1,8 @@
 ---
-title: "1-00 A propos de Terraform"
-description: "Guide 1-00 A propos de Terraform"
+title: "Cours - A propos de Terraform"
+description: "Guide Cours - A propos de Terraform"
 sidebar:
-  order: 0
+  order: 101
 ---
 
 

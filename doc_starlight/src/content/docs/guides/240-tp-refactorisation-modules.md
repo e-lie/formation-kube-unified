@@ -2,7 +2,7 @@
 title: "TP partie 9 - Modules et gestion d'état avancée"
 description: "Guide TP partie 9 - Modules et gestion d'état avancée"
 sidebar:
-  order: 900
+  order: 240
 ---
 
 

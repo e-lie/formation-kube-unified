@@ -6,7 +6,9 @@ remote_state {
   config = {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
     region         = "eu-west-3"
+    profile        = "<awsprofile-votreprenom>"
     encrypt        = true
+    use_lockfile   = true
     dynamodb_table = "terraform-state-lock"
     
     # La clé sera générée automatiquement par Terragrunt

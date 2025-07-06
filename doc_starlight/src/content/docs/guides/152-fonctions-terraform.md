@@ -1,7 +1,10 @@
 ---
-title: Cours - Fonctions intégrées à Terraform
-weight: 9
+title: "Cours - Fonctions intégrées à Terraform"
+description: "Guide Cours - Fonctions intégrées à Terraform"
+sidebar:
+  order: 152
 ---
+
 
 ## Les fonctions dans Terraform 
 

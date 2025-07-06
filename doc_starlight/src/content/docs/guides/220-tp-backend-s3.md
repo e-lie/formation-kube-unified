@@ -2,7 +2,7 @@
 title: "TP partie 7 - Backend S3 et collaboration"
 description: "Guide TP partie 7 - Backend S3 et collaboration"
 sidebar:
-  order: 700
+  order: 220
 ---
 
 

@@ -2,7 +2,7 @@
 title: "TP partie 6 - État Terraform et workspaces"
 description: "Guide TP partie 6 - État Terraform et workspaces"
 sidebar:
-  order: 600
+  order: 210
 ---
 
 
