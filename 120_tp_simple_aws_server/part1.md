@@ -15,8 +15,7 @@ Créez un dossier TP1 et ouvrez le dans VSCode. Créez à l'intérieur un fichie
 
 - Ajoutez un fichier `.gitignore` avec le contenu suivant adapté à terraform :
 
-
-```ini
+```
 # Local .terraform directories
 **/.terraform/*
 
