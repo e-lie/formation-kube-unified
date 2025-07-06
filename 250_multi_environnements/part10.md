@@ -1,5 +1,5 @@
 ---
-title: TP partie 10 -  Déploiement Multi-Environnements avec Terraform
+title: TP partie 10 - Déploiement Multi-Environnements avec Terraform
 weight: 12
 ---
 
@@ -33,7 +33,7 @@ Pour ce TP, nous utilisons l'approche par répertoires séparés, qui est la mé
 - **Flexibilité** : Configurations différentes par environnement
 - **CI/CD friendly** : Pipelines simples à mettre en place
 
-**Structure a construire :**
+**Structure à construire :**
 
 ```
 250_multi_environnements/
@@ -64,6 +64,11 @@ Pour ce TP, nous utilisons l'approche par répertoires séparés, qui est la mé
     └── backend-config.tf
 ```
 
+**Pourquoi éviter les workspaces ?**
+- **Risques d'erreur** : Facile de se tromper d'environnement
+- **État partagé** : Tous les workspaces utilisent le même backend
+- **Complexité** : Gestion des variables et configurations plus difficile
+- **Manque de flexibilité** : Difficile d'avoir des configurations très différentes
 
 ## Mise en place de la structure multi-environnements
 
