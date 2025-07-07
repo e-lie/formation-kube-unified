@@ -194,7 +194,7 @@ EOF
 # Environnement prod
 cat > environments/prod/terraform.tfvars << 'EOF'
 instance_count = 3
-instance_type  = "t2.medium"
+instance_type  = "t2.small"
 feature_name   = "prod"
 EOF
 ```
