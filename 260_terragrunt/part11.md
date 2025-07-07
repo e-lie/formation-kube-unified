@@ -77,12 +77,13 @@ Notre projet Terragrunt utilise cette organisation :
 │   ├── main.tf
 │   ├── variables.tf
 │   └── outputs.tf
-├── dev/
-│   └── terragrunt.hcl           # Config environnement dev
-├── staging/
-│   └── terragrunt.hcl           # Config environnement staging
-└── prod/
-    └── terragrunt.hcl           # Config environnement prod
+└── environments/                 # Tous les environnements regroupés
+    ├── dev/
+    │   └── terragrunt.hcl       # Config environnement dev
+    ├── staging/
+    │   └── terragrunt.hcl       # Config environnement staging
+    └── prod/
+        └── terragrunt.hcl       # Config environnement prod
 ```
 
 ## Configuration commune : _common/terragrunt.hcl
@@ -98,7 +99,7 @@ remote_state {
     key            = "tp-fil-rouge-${path_relative_to_include()}/terraform.tfstate"
     # path_relative_to_include() : Fonction Terragrunt qui retourne le chemin relatif
     # depuis le fichier _common/terragrunt.hcl jusqu'au fichier terragrunt.hcl 
-    # qui l'inclut. => Depuis dev/terragrunt.hcl : retourne "dev"
+    # qui l'inclut. => Depuis environments/dev/terragrunt.hcl : retourne "environments/dev"
     region         = "eu-west-3"
     profile        = "default"
     encrypt        = true
@@ -269,16 +270,16 @@ output "web_url" {
 
 ## Configuration par environnement
 
-### dev/terragrunt.hcl
+### environments/dev/terragrunt.hcl
 
 ```coffee
-# dev/terragrunt.hcl
+# environments/dev/terragrunt.hcl
 include "root" {
   path = find_in_parent_folders("_common/terragrunt.hcl")
 }
 
 terraform {
-  source = "../main-infrastructure"
+  source = "../../main-infrastructure"
 }
 
 inputs = {
@@ -293,53 +294,7 @@ inputs = {
 }
 ```
 
-### staging/terragrunt.hcl
-
-```coffee
-# staging/terragrunt.hcl
-include "root" {
-  path = find_in_parent_folders("_common/terragrunt.hcl")
-}
-
-terraform {
-  source = "../main-infrastructure"
-}
-
-inputs = {
-  feature_name   = "staging"
-  instance_count = 2
-  instance_type  = "t2.small"
-  
-  # CIDR spécifiques à staging
-  vpc_cidr             = "10.1.0.0/16"
-  public_subnet_cidr   = "10.1.1.0/24"
-  public_subnet_cidr_2 = "10.1.2.0/24"
-}
-```
-
-### prod/terragrunt.hcl
-
-```coffee
-# prod/terragrunt.hcl
-include "root" {
-  path = find_in_parent_folders("_common/terragrunt.hcl")
-}
-
-terraform {
-  source = "../main-infrastructure"
-}
-
-inputs = {
-  feature_name   = "prod"
-  instance_count = 3
-  instance_type  = "t2.medium"
-  
-  # CIDR spécifiques à prod
-  vpc_cidr             = "10.2.0.0/16"
-  public_subnet_cidr   = "10.2.1.0/24"
-  public_subnet_cidr_2 = "10.2.2.0/24"
-}
-```
+Idem pour les environnements `prod` et `staging`
 
 ## Déploiement avec Terragrunt
 
@@ -347,7 +302,7 @@ inputs = {
 
 ```bash
 # Se placer dans un environnement spécifique
-cd dev
+cd environments/dev
 
 # Initialiser l'environnement
 terragrunt init
@@ -376,80 +331,8 @@ terragrunt run-all apply
 terragrunt run-all destroy
 
 # Exécuter depuis la racine sur un environnement spécifique
-terragrunt plan --terragrunt-working-dir dev
-terragrunt apply --terragrunt-working-dir staging
-```
-
-## Scripts d'automatisation
-
-### scripts/deploy-all.sh
-
-```bash
-#!/bin/bash
-set -e
-
-echo "🚀 Déploiement de tous les environnements avec Terragrunt"
-
-environments=("dev" "staging" "prod")
-
-for env in "${environments[@]}"; do
-    echo "📋 Déploiement de l'environnement: $env"
-    
-    cd "$env"
-    
-    # Initialisation
-    terragrunt init
-    
-    # Plan
-    terragrunt plan -out=tfplan
-    
-    # Protection pour la production
-    if [ "$env" == "prod" ]; then
-        echo "⚠️  ATTENTION: Déploiement en PRODUCTION!"
-        read -p "Êtes-vous sûr ? (yes/no): " confirmation
-        if [ "$confirmation" != "yes" ]; then
-            echo "Déploiement de $env annulé."
-            cd ..
-            continue
-        fi
-    fi
-    
-    # Apply
-    terragrunt apply tfplan
-    
-    echo "✅ Environnement $env déployé avec succès"
-    cd ..
-done
-
-echo "🎉 Tous les environnements ont été déployés!"
-```
-
-### scripts/validate-all.sh
-
-```bash
-#!/bin/bash
-set -e
-
-echo "🔍 Validation de tous les environnements Terragrunt"
-
-environments=("dev" "staging" "prod")
-
-for env in "${environments[@]}"; do
-    echo "Validation de l'environnement: $env"
-    
-    cd "$env"
-    
-    # Validation Terragrunt
-    terragrunt validate
-    
-    # Plan pour vérifier la cohérence
-    terragrunt plan -detailed-exitcode
-    
-    echo "✅ Environnement $env validé"
-    cd ..
-done
-
-echo "✅ Tous les environnements sont valides!"
+terragrunt plan --terragrunt-working-dir environments/dev
+terragrunt apply --terragrunt-working-dir environments/staging
 ```
 
 ## Avantages démontrés de Terragrunt
@@ -457,7 +340,8 @@ echo "✅ Tous les environnements sont valides!"
 ### Comparaison avec Terraform vanilla
 
 **Avant (Part 10 - Terraform vanilla) :**
-```
+
+```sh
 250_multi_environnements/
 ├── environments/dev/
 │   ├── main.tf           # 50 lignes (DUPLIQUÉ)
@@ -475,7 +359,8 @@ echo "✅ Tous les environnements sont valides!"
 **Total : 270 lignes dont 240 dupliquées (89% de duplication)**
 
 **Après (Part 11 - Terragrunt) :**
-```
+
+```sh
 260_terragrunt/
 ├── _common/terragrunt.hcl         # 40 lignes (configuration commune)
 ├── main-infrastructure/
@@ -499,14 +384,14 @@ echo "✅ Tous les environnements sont valides!"
 
 ### 1. Génération automatique de fichiers
 
-```hcl
+```coffee
 # Terragrunt génère automatiquement backend.tf et provider.tf
 # Plus besoin de les maintenir manuellement dans chaque environnement
 ```
 
 ### 2. Variables hiérarchiques
 
-```hcl
+```coffee
 # _common/terragrunt.hcl (niveau racine)
 inputs = {
   aws_region = "eu-west-3"    # Commun à tous
@@ -521,7 +406,7 @@ inputs = {
 
 ### 3. Référencement intelligent des chemins
 
-```hcl
+```coffee
 # find_in_parent_folders() trouve automatiquement _common/terragrunt.hcl
 include "root" {
   path = find_in_parent_folders("_common/terragrunt.hcl")
@@ -569,36 +454,3 @@ terragrunt plan
 # staging: tp-fil-rouge-staging/terraform.tfstate
 # prod:    tp-fil-rouge-prod/terraform.tfstate
 ```
-
-## Conclusion
-
-### Quand choisir Terragrunt ?
-
-**✅ Utilisez Terragrunt quand :**
-- Vous gérez plusieurs environnements (dev/staging/prod)
-- Vous avez de la duplication de code Terraform
-- Vous voulez une configuration backend centralisée
-- Votre équipe maîtrise les concepts Terraform de base
-
-**❌ Restez sur Terraform vanilla quand :**
-- Vous n'avez qu'un seul environnement
-- Votre équipe apprend encore Terraform
-- Vous avez des contraintes organisationnelles sur les outils
-
-### Bénéfices mesurés dans ce TP
-
-1. **Élimination de 89% de duplication de code**
-2. **Réduction de 37% du volume total de code**
-3. **Configuration backend unique et centralisée**
-4. **Gestion des variables simplifiée avec héritage**
-5. **Déploiement automatisé multi-environnements**
-
-### Points clés à retenir
-
-- **Terragrunt ne remplace pas Terraform**, il l'améliore
-- **Structure claire** avec séparation configuration commune/spécifique
-- **Génération automatique** des fichiers backend et provider
-- **Variables hiérarchiques** avec héritage intelligent
-- **Commandes simples** pour gérer plusieurs environnements
-
-Dans un projet réel, Terragrunt devient indispensable dès que vous gérez plus d'un environnement, permettant de maintenir un code propre, sans duplication, et facilement évolutif.

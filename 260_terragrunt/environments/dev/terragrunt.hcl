@@ -1,10 +1,10 @@
-# dev/terragrunt.hcl
+# environments/dev/terragrunt.hcl
 include "root" {
   path = find_in_parent_folders("_common/terragrunt.hcl")
 }
 
 terraform {
-  source = "../main-infrastructure"
+  source = "../../main-infrastructure"
 }
 
 inputs = {
