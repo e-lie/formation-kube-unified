@@ -322,7 +322,7 @@ inputs = {
 
 ### prod/terragrunt.hcl
 
-```hcl
+```coffee
 # prod/terragrunt.hcl
 include "root" {
   path = find_in_parent_folders("_common/terragrunt.hcl")
