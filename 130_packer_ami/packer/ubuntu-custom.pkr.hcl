@@ -14,7 +14,7 @@ variable "region" {
 
 variable "profile" {
   type    = string
-  default = "<awsprofile-votreprenom>"
+  default = "default"
 }
 
 data "amazon-ami" "ubuntu" {

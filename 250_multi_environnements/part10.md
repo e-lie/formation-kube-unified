@@ -260,7 +260,7 @@ terraform init \
     -backend-config="bucket=terraform-state-<YOUR-BUCKET-NAME>" \
     -backend-config="key=tp-fil-rouge-${ENVIRONMENT}/terraform.tfstate" \
     -backend-config="region=eu-west-3" \
-    -backend-config="profile=<awsprofile-votreprenom>"
+    -backend-config="profile=default"
 
 # Plan
 echo "📋 Creating execution plan for $ENVIRONMENT..."

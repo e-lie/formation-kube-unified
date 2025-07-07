@@ -137,7 +137,7 @@ backend "s3" {
   bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
   key            = "tp-fil-rouge-dev/terraform.tfstate"
   region         = "eu-west-3"
-  profile        = "<awsprofile-votreprenom>"
+  profile        = "default"
   encrypt        = true
   use_lockfile   = true
   dynamodb_table = "terraform-state-lock"

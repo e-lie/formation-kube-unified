@@ -103,7 +103,7 @@ aws s3 ls # ne devrait pas renvoyer d'erreur (rien du tout en fait)
 ```coffee
 provider "aws" {
   region = "eu-west-3"
-  profile = "<awsprofile-votreprenom>"
+  profile = "default"
 }
 ```
 - `provider "aws"` : Configuration du provider AWS

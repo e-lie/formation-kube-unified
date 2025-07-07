@@ -287,7 +287,7 @@ resource "aws_instance" "web_server" {
 
 ```coffee
 aws_region           = "eu-west-3"
-aws_profile          = "<awsprofile-votreprenom>"
+aws_profile          = "default"
 vpc_cidr             = "10.100.0.0/16"
 public_subnet_cidr   = "10.100.1.0/24"
 instance_type        = "t2.micro"

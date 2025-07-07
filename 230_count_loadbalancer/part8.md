@@ -399,7 +399,7 @@ Créez différents fichiers de variables pour tester les configurations :
 **single-server.tfvars** (un seul serveur) :
 ```coffee
 aws_region           = "eu-west-3"
-aws_profile          = "<awsprofile-votreprenom>"
+aws_profile          = "default"
 vpc_cidr             = "10.0.0.0/16"
 public_subnet_cidr   = "10.0.1.0/24"
 instance_type        = "t2.micro"
@@ -411,7 +411,7 @@ instance_count       = 1
 **multi-server.tfvars** (serveurs multiples avec ALB) :
 ```coffee
 aws_region           = "eu-west-3"
-aws_profile          = "<awsprofile-votreprenom>"
+aws_profile          = "default"
 vpc_cidr             = "10.0.0.0/16"
 public_subnet_cidr   = "10.0.1.0/24"
 instance_type        = "t2.micro"

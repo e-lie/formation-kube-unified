@@ -5,7 +5,7 @@ remote_state {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
     key            = "tp-fil-rouge-${path_relative_to_include()}/terraform.tfstate"
     region         = "eu-west-3"
-    profile        = "<awsprofile-votreprenom>"
+    profile        = "default"
     encrypt        = true
     use_lockfile   = true
     dynamodb_table = "terraform-state-lock"
@@ -42,6 +42,6 @@ EOF
 # Variables communes à tous les environnements
 inputs = {
   aws_region   = "eu-west-3"
-  aws_profile  = "<awsprofile-votreprenom>"
+  aws_profile  = "default"
   ssh_key_path = "~/.ssh/id_terraform"
 }

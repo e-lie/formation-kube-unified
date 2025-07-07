@@ -9,7 +9,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3" # DC de paris
-  profile = "<awsprofile-votreprenom>"
+  profile = "default"
 }
 
 resource "aws_instance" "web_server" {

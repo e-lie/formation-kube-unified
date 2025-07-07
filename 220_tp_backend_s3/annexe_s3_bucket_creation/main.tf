@@ -15,7 +15,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3"
-  profile = "<awsprofile-votreprenom>"
+  profile = "default"
 }
 
 # Génération d'un suffixe aléatoire pour le bucket

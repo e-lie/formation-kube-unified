@@ -116,7 +116,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3"
-  profile = "<awsprofile-votreprenom>"
+  profile = "default"
 }
 ```
 
@@ -172,7 +172,7 @@ variable "aws_region" {
 variable "aws_profile" {
   description = "AWS CLI profile to use"
   type        = string
-  default     = "<awsprofile-votreprenom>"
+  default     = "default"
 }
 
 variable "vpc_cidr" {

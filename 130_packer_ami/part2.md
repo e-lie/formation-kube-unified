@@ -61,7 +61,7 @@ variable "region" {
 
 variable "profile" {
   type    = string
-  default = "<awsprofile-votreprenom>"
+  default = "default"
 }
 
 data "amazon-ami" "ubuntu" {
@@ -144,7 +144,7 @@ terraform {
 
 provider "aws" {
   region  = "eu-west-3"
-  profile = "<awsprofile-votreprenom>"
+  profile = "default"
 }
 
 data "aws_ami" "custom_ubuntu" {
