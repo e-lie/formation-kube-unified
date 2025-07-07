@@ -440,87 +440,100 @@ cd ../..
 Exemple de configuration GitLab CI :
 
 ```yaml
-# .gitlab-ci.yml
+# .gitlab-ci.yml - Pipeline CI/CD pour multi-environnements Terraform
+
+# Définition des étapes du pipeline
 stages:
-  - validate
-  - plan
-  - deploy
+  - validate  # Validation et formatage du code
+  - plan      # Création des plans d'exécution
+  - deploy    # Déploiement sur les environnements
 
+# Variables globales du pipeline
 variables:
-  TF_ROOT: ${CI_PROJECT_DIR}/environments
-  TF_IN_AUTOMATION: "true"
+  TF_ROOT: ${CI_PROJECT_DIR}/environments  # Chemin vers les environnements
+  TF_IN_AUTOMATION: "true"                 # Indique à Terraform qu'il est en mode automatisé
 
+# Template de base réutilisé par tous les jobs Terraform
 .terraform-base:
-  image: hashicorp/terraform:1.5
+  image: hashicorp/terraform:1.5  # Image Docker officielle Terraform
   before_script:
-    - cd ${TF_ROOT}/${ENVIRONMENT}
+    - cd ${TF_ROOT}/${ENVIRONMENT}  # Se placer dans le bon environnement
+    # Initialiser avec la clé spécifique à l'environnement
     - terraform init -backend-config="key=${ENVIRONMENT}/terraform.tfstate"
 
+# Job de validation : vérifie le formatage et la syntaxe
 validate:
   extends: .terraform-base
   stage: validate
   script:
-    - terraform fmt -check
-    - terraform validate
+    - terraform fmt -check  # Vérifier le formatage du code
+    - terraform validate    # Valider la syntaxe Terraform
+  # Exécution en parallèle pour tous les environnements
   parallel:
     matrix:
       - ENVIRONMENT: [dev, staging, prod]
 
+# Job de planification : créer les plans d'exécution
 plan:
   extends: .terraform-base
   stage: plan
   script:
-    - terraform plan -out=plan.tfplan
+    - terraform plan -out=plan.tfplan  # Créer le plan d'exécution
+  # Sauvegarder le plan comme artefact pour l'étape suivante
   artifacts:
     paths:
       - ${TF_ROOT}/${ENVIRONMENT}/plan.tfplan
-    expire_in: 7 days
+    expire_in: 7 days  # Les plans expirent après 7 jours
+  # Exécution en parallèle pour tous les environnements
   parallel:
     matrix:
       - ENVIRONMENT: [dev, staging, prod]
 
+# Déploiement automatique sur dev (branche develop)
 deploy:dev:
   extends: .terraform-base
   stage: deploy
   environment:
-    name: dev
+    name: dev  # Nom de l'environnement GitLab
   variables:
     ENVIRONMENT: dev
   script:
-    - terraform apply plan.tfplan
+    - terraform apply plan.tfplan  # Appliquer le plan sauvegardé
   dependencies:
-    - plan
+    - plan  # Dépend du job plan pour récupérer l'artefact
   only:
-    - develop
+    - develop  # Se déclenche uniquement sur la branche develop
 
+# Déploiement automatique sur staging (branche main)
 deploy:staging:
   extends: .terraform-base
   stage: deploy
   environment:
-    name: staging
+    name: staging  # Nom de l'environnement GitLab
   variables:
     ENVIRONMENT: staging
   script:
-    - terraform apply plan.tfplan
+    - terraform apply plan.tfplan  # Appliquer le plan sauvegardé
   dependencies:
-    - plan
+    - plan  # Dépend du job plan pour récupérer l'artefact
   only:
-    - main
+    - main  # Se déclenche uniquement sur la branche main
 
+# Déploiement manuel sur production (tags uniquement)
 deploy:prod:
   extends: .terraform-base
   stage: deploy
   environment:
-    name: production
+    name: production  # Nom de l'environnement GitLab
   variables:
     ENVIRONMENT: prod
   script:
-    - terraform apply plan.tfplan
+    - terraform apply plan.tfplan  # Appliquer le plan sauvegardé
   dependencies:
-    - plan
-  when: manual
+    - plan  # Dépend du job plan pour récupérer l'artefact
+  when: manual  # Déclenchement manuel obligatoire pour la production
   only:
-    - tags
+    - tags  # Se déclenche uniquement sur les tags (releases)
 ```
 
 ## Ressources supplémentaires
