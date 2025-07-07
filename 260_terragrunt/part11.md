@@ -64,7 +64,7 @@ terragrunt --version
 
 Notre projet Terragrunt utilise cette organisation :
 
-```
+```sh
 260_terragrunt/
 ├── part11.md                     # Ce tutoriel
 ├── _common/
@@ -154,7 +154,7 @@ inputs = {
 
 Ce fichier combine tous nos modules existants :
 
-```hcl
+```coffee
 # main-infrastructure/main.tf
 module "vpc" {
   source = "../modules/vpc"
@@ -194,7 +194,7 @@ module "loadbalancer" {
 
 ### main-infrastructure/variables.tf
 
-```hcl
+```coffee
 # main-infrastructure/variables.tf
 variable "aws_region" {
   description = "AWS region"
