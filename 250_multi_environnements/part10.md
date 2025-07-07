@@ -105,16 +105,25 @@ cp ../240_refactorisation_modules/variables.tf environments/prod/
 cp ../240_refactorisation_modules/outputs.tf environments/prod/
 ```
 
-### Étape 3 : Adapter le backend.tf pour la structure multi-environnements
+### Étape 3 : Vérification de la configuration du backend S3
 
-Créons un fichier global pour la configuration backend :
+Chaque fichier `environments/*/main.tf` contient déjà la configuration minimale du backend :
 
-```bash
-# Déplacer et adapter la configuration backend
-cp ../240_refactorisation_modules/backend.tf global/backend-config.tf
+```coffee
+terraform {
+  # ... providers ...
+  
+  # Backend configuré dynamiquement
+  backend "s3" {}
+}
 ```
 
-Éditez `global/backend-config.tf` pour l'adapter aux multiples environnements (la clé sera spécifiée dynamiquement).
+Cette configuration vide `backend "s3" {}` est intentionnelle. Elle indique à Terraform d'utiliser S3 comme backend, mais les paramètres spécifiques (bucket, key, region, profile) seront fournis lors de l'initialisation via la commande `terraform init -backend-config`.
+
+**Pourquoi cette approche ?**
+- Chaque environnement doit avoir son propre état dans S3
+- La clé (path) dans S3 doit être différente pour chaque environnement  
+- Les paramètres du backend sont passés dynamiquement pour éviter toute confusion
 
 ### Étape 4 : Adapter les fichiers main.tf pour chaque environnement
 
@@ -122,36 +131,47 @@ Pour chaque environnement, nous devons modifier le fichier `main.tf` pour :
 1. Utiliser le backend S3 sans configuration statique
 2. Ajuster les paramètres workspace dans les modules
 
+**Pourquoi fixer le workspace en dur ?**
+
+Dans l'approche multi-environnements par dossiers (au lieu d'utiliser les workspaces Terraform), nous fixons le nom du workspace en dur dans chaque environnement pour plusieurs raisons :
+
+- **Clarté** : Le nom de l'environnement est explicite dans le code, pas dépendant d'un état externe
+- **Isolation** : Impossible de déployer accidentellement dans le mauvais environnement
+- **Simplicité** : Pas besoin de changer de workspace avant chaque déploiement
+- **Cohérence** : Les tags et noms de ressources correspondent toujours à l'environnement réel
+
+Cette approche élimine le risque d'erreur humaine où quelqu'un oublierait de changer de workspace avant un déploiement.
+
 #### Environnement dev
 
 Éditez `environments/dev/main.tf` et modifiez :
 
-1. La section backend S3 (qui contenait des paramètres spécifiques) :
+Le fichier main.tf est déjà correctement configuré avec :
+- `backend "s3" {}` pour permettre la configuration dynamique
+- `workspace = "dev"` passé directement aux modules (pas de variable, juste la valeur en dur)
+
+Vérifiez que les modules reçoivent bien le nom de l'environnement :
 ```coffee
-# Remplacer ceci :
-backend "s3" {
-  bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
-  key            = "tp-fil-rouge-dev/terraform.tfstate"
-  region         = "eu-west-3"
-  profile        = "<awsprofile-votreprenom>"
-  encrypt        = true
-  use_lockfile   = true
-  dynamodb_table = "terraform-state-lock"
+# Module VPC
+module "vpc" {
+  source = "../../modules/vpc"
+  # ... autres variables ...
+  workspace = "dev"  # Valeur fixe pour l'environnement dev
 }
 
-# Par ceci :
-backend "s3" {}
-```
+# Module Webserver
+module "webserver" {
+  source = "../../modules/webserver"
+  # ... autres variables ...
+  workspace = "dev"  # Valeur fixe pour l'environnement dev
+}
 
-2. Les références workspace dans les modules :
-```coffee
-# Dans module "vpc", remplacer :
-workspace = terraform.workspace
-
-# Par :
-workspace = "dev"
-
-# Faire de même pour les modules "webserver" et "loadbalancer"
+# Module Load Balancer
+module "loadbalancer" {
+  source = "../../modules/loadbalancer"
+  # ... autres variables ...
+  workspace = "dev"  # Valeur fixe pour l'environnement dev
+}
 ```
 
 #### Environnement staging
@@ -235,8 +255,12 @@ fi
 cd "environments/$ENVIRONMENT"
 
 # Initialisation avec le backend spécifique
+# Les autres paramètres (bucket, region, profile) sont définis dans main.tf
 terraform init \
-    -backend-config="key=tp-fil-rouge-${ENVIRONMENT}/terraform.tfstate"
+    -backend-config="bucket=terraform-state-<YOUR-BUCKET-NAME>" \
+    -backend-config="key=tp-fil-rouge-${ENVIRONMENT}/terraform.tfstate" \
+    -backend-config="region=eu-west-3" \
+    -backend-config="profile=<awsprofile-votreprenom>"
 
 # Plan
 echo "📋 Creating execution plan for $ENVIRONMENT..."
@@ -313,106 +337,103 @@ done
 
 Cette vérification confirme que la structure multi-environnements est correctement configurée et que chaque environnement est isolé avec ses propres paramètres.
 
-## Bonnes pratiques
+## Résumé de l'approche multi-environnements
 
-### Isolation des états
+### Architecture choisie
 
-Chaque environnement doit avoir son propre état Terraform :
+Nous avons implémenté une approche basée sur des **dossiers séparés** plutôt que sur les workspaces Terraform :
 
-```coffee
-# backend-dev.hcl
-key = "dev/terraform.tfstate"
-
-# backend-staging.hcl
-key = "staging/terraform.tfstate"
-
-# backend-prod.hcl
-key = "prod/terraform.tfstate"
+```
+environments/
+├── dev/       # Environnement de développement
+├── staging/   # Environnement de staging  
+└── prod/      # Environnement de production
 ```
 
-### Contrôle d'accès
+### Points clés de l'implémentation
 
-Implémentez des politiques IAM différenciées :
+1. **Backend S3 dynamique** : Chaque environnement a `backend "s3" {}` dans son main.tf. La configuration complète est passée lors de l'init.
 
-```coffee
-# IAM policy pour dev
-resource "aws_iam_policy" "terraform_dev" {
-  name = "terraform-dev-policy"
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = ["*"]
-        Resource = ["*"]
-        Condition = {
-          StringEquals = {
-            "aws:RequestedRegion": var.aws_region
-          }
-        }
-      }
-    ]
-  })
-}
+2. **Workspace fixé en dur** : Dans chaque main.tf, on passe directement `workspace = "dev"`, `workspace = "staging"` ou `workspace = "prod"` aux modules (pas de variable).
 
-# IAM policy pour prod (plus restrictive)
-resource "aws_iam_policy" "terraform_prod" {
-  name = "terraform-prod-policy"
-  
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ec2:Describe*",
-          "ec2:CreateTags",
-          "ec2:RunInstances",
-          "ec2:TerminateInstances"
-        ]
-        Resource = ["*"]
-        Condition = {
-          StringEquals = {
-            "ec2:InstanceType": ["t2.medium", "t2.large"]
-          }
-        }
-      }
-    ]
-  })
-}
-```
+3. **Isolation complète** : Chaque environnement a :
+   - Son propre état Terraform dans S3 (`tp-fil-rouge-dev/terraform.tfstate`, etc.)
+   - Ses propres valeurs dans `terraform.tfvars`
+   - Son propre dossier isolé
 
-### Validation et tests
+4. **Scripts d'automatisation** :
+   - `deploy.sh` : Gère l'initialisation du backend et le déploiement
+   - `validate.sh` : Valide tous les environnements
 
-Créez `scripts/validate.sh` :
+## Déploiement et test des trois environnements
+
+### Déploiement de l'environnement de développement
+
+Commencez par déployer l'environnement de développement :
 
 ```bash
-#!/bin/bash
-set -e
-
-echo "🔍 Validating Terraform configurations..."
-
-for env in dev staging prod; do
-    echo "Checking $env environment..."
-    cd "environments/$env"
-    
-    # Format check
-    terraform fmt -check
-    
-    # Validation
-    terraform validate
-    
-    # Linting avec tflint si disponible
-    if command -v tflint &> /dev/null; then
-        tflint
-    fi
-    
-    cd ../..
-done
-
-echo "✅ All environments validated successfully!"
+# Déployer l'environnement de développement
+./scripts/deploy.sh dev
 ```
+
+### Validation du déploiement dev
+
+Vérifiez que l'infrastructure est correctement déployée :
+
+```bash
+# Tester l'accès au load balancer
+cd environments/dev
+curl $(terraform output -raw web_url)
+
+# Vérifier les outputs
+terraform output
+cd ../..
+```
+
+**Résultat attendu** : 
+- 1 instance EC2 t2.micro déployée
+- Load balancer fonctionnel
+- Page web accessible
+
+### Déploiement staging
+
+Une fois le développement validé, déployez staging avec 2 instances :
+
+```bash
+# Déploiement staging
+./scripts/deploy.sh staging
+
+# Validation staging
+cd environments/staging
+terraform output
+curl $(terraform output -raw web_url)
+cd ../..
+```
+
+**Résultat attendu** : 
+- 2 instances EC2 t2.small déployées  
+- Load balancer avec plus de capacité
+
+### Déploiement production
+
+Enfin, déployez la production avec 3 instances :
+
+```bash
+# Déploiement production (avec confirmation)
+./scripts/deploy.sh prod
+
+# Validation production
+cd environments/prod  
+terraform output
+curl $(terraform output -raw web_url)
+cd ../..
+```
+
+**Résultat attendu** :
+- 3 instances EC2 t2.medium déployées
+- Infrastructure de production complète
+- Confirmation manuelle requise avant déploiement
+
 
 ### Exemple de pipeline CI/CD
 
@@ -502,102 +523,8 @@ deploy:prod:
     - tags
 ```
 
-## Déploiement et test des trois environnements
-
-### Déploiement de l'environnement de développement
-
-Commencez par déployer l'environnement de développement :
-
-```bash
-# Déployer l'environnement de développement
-./scripts/deploy.sh dev
-```
-
-### Validation du déploiement dev
-
-Vérifiez que l'infrastructure est correctement déployée :
-
-```bash
-# Tester l'accès au load balancer
-cd environments/dev
-curl $(terraform output -raw web_url)
-
-# Vérifier les outputs
-terraform output
-cd ../..
-```
-
-**Résultat attendu** : 
-- 1 instance EC2 t2.micro déployée
-- Load balancer fonctionnel
-- Page web accessible
-
-### Déploiement staging
-
-Une fois le développement validé, déployez staging avec 2 instances :
-
-```bash
-# Déploiement staging
-./scripts/deploy.sh staging
-
-# Validation staging
-cd environments/staging
-terraform output
-curl $(terraform output -raw web_url)
-cd ../..
-```
-
-**Résultat attendu** : 
-- 2 instances EC2 t2.small déployées  
-- Load balancer avec plus de capacité
-
-### Déploiement production
-
-Enfin, déployez la production avec 3 instances :
-
-```bash
-# Déploiement production (avec confirmation)
-./scripts/deploy.sh prod
-
-# Validation production
-cd environments/prod  
-terraform output
-curl $(terraform output -raw web_url)
-cd ../..
-```
-
-**Résultat attendu** :
-- 3 instances EC2 t2.medium déployées
-- Infrastructure de production complète
-- Confirmation manuelle requise avant déploiement
-
 ## Ressources supplémentaires
 
 - [Terraform State Management](https://www.terraform.io/docs/state/index.html)
 - [AWS Well-Architected Framework - Reliability Pillar](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html)
 - [HashiCorp Best Practices for Multi-Environment](https://learn.hashicorp.com/tutorials/terraform/organize-configuration)
-
-## Conclusion : gestion multi-environnements
-
-### Convention de structure
-
-- **environments/** : Séparation claire par environnement  
-- **modules/** : Code réutilisable et centralisé
-- **scripts/** : Automation et déploiement
-- **global/** : Configuration partagée
-
-### Séparation des responsabilités
-
-Chaque environnement doit avoir :
-- Son propre état Terraform isolé
-- Des configurations spécifiques mais cohérentes
-- Des mécanismes de protection adaptés au niveau de criticité
-
-### Automatisation et sécurité
-
-L'approche par répertoires facilite :
-- L'intégration dans des pipelines CI/CD
-- La mise en place de contrôles d'accès différenciés
-- La validation et les tests automatisés
-
-Cette structure multi-environnements fournit une base solide pour gérer des infrastructures complexes en production tout en maintenant la simplicité de développement et la sécurité nécessaire.
