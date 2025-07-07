@@ -92,13 +92,16 @@ Notre projet Terragrunt utilise cette organisation :
 
 Ce fichier définit la configuration partagée entre tous les environnements :
 
-```hcl
+```coffee
 # _common/terragrunt.hcl
 remote_state {
   backend = "s3"
   config = {
     bucket         = "terraform-state-<YOUR-BUCKET-NAME>"
     key            = "tp-fil-rouge-${path_relative_to_include()}/terraform.tfstate"
+    # path_relative_to_include() : Fonction Terragrunt qui retourne le chemin relatif
+    # depuis le fichier _common/terragrunt.hcl jusqu'au fichier terragrunt.hcl 
+    # qui l'inclut. => Depuis dev/terragrunt.hcl : retourne "dev"
     region         = "eu-west-3"
     profile        = "default"
     encrypt        = true
@@ -244,7 +247,7 @@ variable "instance_count" {
 
 ### main-infrastructure/outputs.tf
 
-```hcl
+```coffee
 # main-infrastructure/outputs.tf
 output "vpc_id" {
   description = "ID du VPC"
@@ -271,7 +274,7 @@ output "web_url" {
 
 ### dev/terragrunt.hcl
 
-```hcl
+```coffee
 # dev/terragrunt.hcl
 include "root" {
   path = find_in_parent_folders("_common/terragrunt.hcl")
@@ -295,7 +298,7 @@ inputs = {
 
 ### staging/terragrunt.hcl
 
-```hcl
+```coffee
 # staging/terragrunt.hcl
 include "root" {
   path = find_in_parent_folders("_common/terragrunt.hcl")
