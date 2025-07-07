@@ -1,16 +1,11 @@
 ---
-title: "2-04 Qu'est ce que larchitecture en modules de Terraform"
-description: "Guide 2-04 Qu'est ce que larchitecture en modules de Terraform"
+title: "Cours - Qu'est ce que larchitecture en modules de Terraform"
+description: "Guide Cours - Qu'est ce que larchitecture en modules de Terraform"
 sidebar:
   order: 234
 ---
 
 
-## Objectifs 
-- Comprendre les modules dans Terraform
-- Savoir créer ses propres modules
-
----
 
 ## Les différentes formes de structuration du code 
 
@@ -20,7 +15,7 @@ sidebar:
 
 Tout le code est dans un seul fichier, sans séparation entre responsabilités.
 
-```coffeescript
+```coffee
 prod
 ├─ outputs.tf 
 ├─ main.tf 

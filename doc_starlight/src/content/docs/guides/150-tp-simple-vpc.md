@@ -124,7 +124,7 @@ Le Security Group de la partie 3 doit être légèrement modifié pour fonctionn
 ```coffee
 # Security Group - modification de la partie 3
 resource "aws_security_group" "web_ssh_access" {
-  name        = "web-ssh-access"
+  name        = "web-ssh-access-<votre-prenom>"
   description = "Allow SSH and HTTP access"
   vpc_id      = aws_vpc.main.id  # <-- Ligne ajoutée pour le VPC personnalisé
 

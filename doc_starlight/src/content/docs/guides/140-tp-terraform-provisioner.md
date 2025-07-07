@@ -45,7 +45,7 @@ data "aws_ami" "custom_ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu-22.04-custom-*"]
+    values = ["ubuntu-22.04-custom-<votre-prenom>-*"]
   }
 
   filter {
@@ -55,7 +55,7 @@ data "aws_ami" "custom_ubuntu" {
 }
 
 resource "aws_security_group" "web_ssh_access" {
-  name        = "web-ssh-access"
+  name        = "web-ssh-access-<votre-prenom>"
   description = "Allow SSH and HTTP access"
 
   ingress {

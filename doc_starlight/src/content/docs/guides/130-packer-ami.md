@@ -6,7 +6,7 @@ sidebar:
 ---
 
 
-Dans cette deuxième partie de TP nous allons créer une AMI personnalisée avec Packer puis l'utiliser dans Terraform. Nous partons d'Ubuntu 24.04 et ajoutons une clé SSH publique.
+Dans cette deuxième partie de TP nous allons créer une AMI personnalisée avec Packer puis l'utiliser dans Terraform. Nous partons d'Ubuntu 22.04 et ajoutons une clé SSH publique.
 
 ## Structure du projet a créer
 
@@ -69,7 +69,7 @@ variable "profile" {
 
 data "amazon-ami" "ubuntu" {
   filters = {
-    name                = "ubuntu/images/hvm-ssd/ubuntu-*-24.04-amd64-server-*"
+    name                = "ubuntu/images/hvm-ssd/ubuntu-*-22.04-amd64-server-*"
     root-device-type    = "ebs"
     virtualization-type = "hvm"
   }
@@ -80,7 +80,7 @@ data "amazon-ami" "ubuntu" {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "ubuntu-24.04-custom-{{timestamp}}"
+  ami_name      = "ubuntu-22.04-custom-<votre-prenom>-{{timestamp}}"
   instance_type = "t2.micro"
   region        = var.region
   profile       = var.profile
@@ -88,9 +88,9 @@ source "amazon-ebs" "ubuntu" {
   ssh_username  = "ubuntu"
 
   tags = {
-    Name = "Ubuntu 24.04 Custom AMI"
+    Name = "Ubuntu 22.04 Custom AMI"
     OS   = "Ubuntu"
-    Version = "24.04"
+    Version = "22.04"
   }
 }
 
@@ -156,7 +156,7 @@ data "aws_ami" "custom_ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu-24.04-custom-*"]
+    values = ["ubuntu-22.04-custom-<votre-prenom>-*"]
   }
 
   filter {
@@ -218,7 +218,7 @@ Modifiez votre fichier `main.tf` pour ajouter le Security Group avant la ressour
 
 ```hcl
 resource "aws_security_group" "web_ssh_access" {
-  name        = "web-ssh-access"
+  name        = "web-ssh-access-<votre-prenom>"
   description = "Allow SSH and HTTP access"
 
   ingress {
