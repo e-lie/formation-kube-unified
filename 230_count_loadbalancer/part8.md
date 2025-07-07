@@ -459,7 +459,7 @@ aws elbv2 describe-target-health \
     --names "${terraform.workspace}-web-tg" \
     --query 'TargetGroups[0].TargetGroupArn' \
     --output text) \
-  --profile <awsprofile-votreprenom>
+ 
 ```
 
 ## Avantages et bonnes pratiques

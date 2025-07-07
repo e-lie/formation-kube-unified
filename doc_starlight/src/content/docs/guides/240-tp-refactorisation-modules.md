@@ -231,10 +231,10 @@ Supposons que vous ayez créé manuellement un bucket S3 pour stocker des logs o
 
 ```bash
 # Créons un bucket S3 avec un nom unique
-aws s3 mb s3://terraform-demo-logs --region eu-west-3 --profile <awsprofile-votreprenom>
+aws s3 mb s3://terraform-demo-logs --region eu-west-3
 
 # Vérifions que le bucket existe
-aws s3 ls s3://terraform-demo-logs --profile <awsprofile-votreprenom>
+aws s3 ls s3://terraform-demo-logs
 # bucket vide -> par de sortie
 ```
 

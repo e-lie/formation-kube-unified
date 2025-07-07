@@ -95,7 +95,7 @@ Une autre méthode classique, souvent plus simple et sécure consiste a utiliser
 
 ```
 aws configure list-profiles
-aws s3 ls --profile <votreprenom> # ne devrait pas renvoyer d'erreur (rien du tout en fait)
+aws s3 ls # ne devrait pas renvoyer d'erreur (rien du tout en fait)
 ```
 
 - `export AWS_PROFILE=mon-profil` permet de définir le profil par défaut pour le shell en cours pour éviter de devoir ajouter l'argument --profile
@@ -200,4 +200,4 @@ Executons et observons le résultat des commandes classiques
 
 Pour vérifier que notre serveur a bien été créé on peut utiliser la CLI: 
 
-`aws ec2 describe-instances --profile votreprenom`
+`aws ec2 describe-instances`

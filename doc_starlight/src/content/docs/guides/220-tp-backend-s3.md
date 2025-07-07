@@ -84,14 +84,14 @@ terraform init
 
 ```bash
 # Vérifiez que l'état est maintenant sur S3
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive --profile=<votreprenom>
+aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive
 
 # Vérifiez les workspaces
 terraform workspace list
 
 # Changez de workspace et observez les différents fichiers d'état
 terraform workspace new test-s3-lock
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive --profile=<votreprenom>
+aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive
 ```
 
 ### Déploiement avec backend distant
@@ -104,7 +104,7 @@ terraform plan -out=tfplan
 terraform apply tfplan
 
 # Vérifiez l'état dans S3
-aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive --profile=<votreprenom>
+aws s3 ls s3://terraform-state-<YOUR-BUCKET-NAME>/ --recursive
 ```
 
 ### Avantages du backend distant et collaboration en équipe
