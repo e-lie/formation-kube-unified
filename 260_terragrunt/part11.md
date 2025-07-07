@@ -81,11 +81,8 @@ Notre projet Terragrunt utilise cette organisation :
 │   └── terragrunt.hcl           # Config environnement dev
 ├── staging/
 │   └── terragrunt.hcl           # Config environnement staging
-├── prod/
-│   └── terragrunt.hcl           # Config environnement prod
-└── scripts/
-    ├── deploy-all.sh
-    └── validate-all.sh
+└── prod/
+    └── terragrunt.hcl           # Config environnement prod
 ```
 
 ## Configuration commune : _common/terragrunt.hcl
