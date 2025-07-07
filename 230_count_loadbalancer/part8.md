@@ -207,6 +207,12 @@ Un ALB est composé de plusieurs ressources Terraform interconnectées :
 3. Listener → Target Group (forward)
 4. Target Group → Instances saines (round-robin)
 
+### Exigence multi-AZ pour l'ALB
+
+**Important :** Un Application Load Balancer AWS nécessite au minimum **deux subnets dans des zones de disponibilité différentes** pour garantir la haute disponibilité. C'est pourquoi notre architecture comprend deux subnets publics (`public_subnet_1` et `public_subnet_2`) situés dans des AZ distinctes.
+
+Cette exigence assure que si une zone de disponibilité entière devient indisponible, l'ALB peut continuer à fonctionner via l'autre zone. AWS refuse la création d'un ALB avec un seul subnet.
+
 Créons un nouveau fichier `loadbalancer.tf` pour gérer l'ALB :
 
 ```coffee
@@ -217,7 +223,7 @@ resource "aws_lb" "main" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb[0].id]
-  subnets           = [aws_subnet.public.id]
+  subnets           = [aws_subnet.public.id, aws_subnet.public_2.id]
 
   enable_deletion_protection = false
 

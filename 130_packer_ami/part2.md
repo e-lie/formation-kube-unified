@@ -3,7 +3,7 @@ title: TP partie 2 - AMI personnalisée avec Packer
 weight: 5
 ---
 
-Dans cette deuxième partie de TP nous allons créer une AMI personnalisée avec Packer puis l'utiliser dans Terraform. Nous partons d'Ubuntu 24.04 et ajoutons une clé SSH publique.
+Dans cette deuxième partie de TP nous allons créer une AMI personnalisée avec Packer puis l'utiliser dans Terraform. Nous partons d'Ubuntu 22.04 et ajoutons une clé SSH publique.
 
 ## Structure du projet a créer
 
@@ -153,7 +153,7 @@ data "aws_ami" "custom_ubuntu" {
 
   filter {
     name   = "name"
-    values = ["ubuntu-24.04-custom-<votre-prenom>-*"]
+    values = ["ubuntu-22.04-custom-<votre-prenom>-*"]
   }
 
   filter {
@@ -215,7 +215,7 @@ Modifiez votre fichier `main.tf` pour ajouter le Security Group avant la ressour
 
 ```hcl
 resource "aws_security_group" "web_ssh_access" {
-  name        = "web-ssh-access"
+  name        = "web-ssh-access-<votre-prenom>"
   description = "Allow SSH and HTTP access"
 
   ingress {

@@ -51,7 +51,7 @@ resource "aws_route_table_association" "public" {
 
 # Security Group
 resource "aws_security_group" "web_ssh_access" {
-  name        = "web-ssh-access"
+  name        = "web-ssh-access-<votre-prenom>"
   description = "Allow SSH and HTTP access"
   vpc_id      = aws_vpc.main.id
 

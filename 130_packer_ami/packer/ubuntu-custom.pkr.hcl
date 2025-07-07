@@ -30,7 +30,7 @@ data "amazon-ami" "ubuntu" {
 }
 
 source "amazon-ebs" "ubuntu" {
-  ami_name      = "ubuntu-22.04-custom-{{timestamp}}"
+  ami_name      = "ubuntu-22.04-custom-<votre-prenom>-{{timestamp}}"
   instance_type = "t2.micro"
   region        = var.region
   profile       = var.profile
@@ -38,9 +38,9 @@ source "amazon-ebs" "ubuntu" {
   ssh_username  = "ubuntu"
 
   tags = {
-    Name = "Ubuntu 24.04 Custom AMI"
+    Name = "Ubuntu 22.04 Custom AMI"
     OS   = "Ubuntu"
-    Version = "24.04"
+    Version = "22.04"
   }
 }
 
