@@ -34,28 +34,12 @@ Terragrunt apporte des solutions élégantes à ces problèmes :
 
 ## Installation de Terragrunt
 
-### Installation sur Linux/macOS
+On peut l'installer avec `tenv` (ou a la main)
 
 ```bash
-# Méthode 1 : Téléchargement direct
-curl -LO https://github.com/gruntwork-io/terragrunt/releases/latest/download/terragrunt_linux_amd64
-sudo mv terragrunt_linux_amd64 /usr/local/bin/terragrunt
-sudo chmod +x /usr/local/bin/terragrunt
+tenv terragrunt install
 
-# Méthode 2 : Via package manager
-# Ubuntu/Debian
-wget -qO- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-sudo apt update && sudo apt install terragrunt
-
-# macOS
-brew install terragrunt
-```
-
-### Vérification de l'installation
-
-```bash
 terragrunt --version
-# Terragrunt v0.50.0
 ```
 
 ## Étude de notre structure Terragrunt
@@ -296,6 +280,116 @@ inputs = {
 
 Idem pour les environnements `prod` et `staging`
 
+## Hiérarchie et ordre de lecture Terragrunt
+
+### Comprendre l'ordre d'exécution
+
+Quand vous exécutez `terragrunt` depuis `environments/dev/`, voici ce qui se passe :
+
+```
+1. Terragrunt lit environments/dev/terragrunt.hcl
+   ↓
+2. Il trouve "include root" qui référence _common/terragrunt.hcl
+   ↓
+3. Il remonte l'arborescence avec find_in_parent_folders()
+   ↓
+4. Il charge _common/terragrunt.hcl
+   ↓
+5. Il fusionne les configurations (common + spécifique)
+   ↓
+6. Il génère les fichiers (backend.tf, provider.tf)
+   ↓
+7. Il exécute Terraform avec la configuration finale
+```
+
+### Mécanisme de fusion des configurations
+
+```coffee
+# Étape 1 : _common/terragrunt.hcl définit les valeurs par défaut
+inputs = {
+  aws_region   = "eu-west-3"
+  aws_profile  = "<awsprofile-votreprenom>"
+  ssh_key_path = "~/.ssh/id_terraform"
+}
+
+# Étape 2 : environments/dev/terragrunt.hcl surcharge ou ajoute
+inputs = {
+  feature_name   = "dev"        # Nouvelle valeur
+  instance_count = 1            # Nouvelle valeur
+  aws_region     = "eu-west-3"  # Héritée (peut être surchargée)
+}
+
+# Résultat : Fusion intelligente
+# Les valeurs de dev prennent la priorité sur celles de _common
+```
+
+### Fonctions Terragrunt essentielles
+
+**1. `find_in_parent_folders()`**
+```coffee
+# Recherche récursive dans les dossiers parents
+# Depuis environments/dev/ :
+# 1. Cherche dans environments/dev/ ❌
+# 2. Cherche dans environments/ ❌
+# 3. Cherche dans 260_terragrunt/ ❌
+# 4. Cherche dans _common/ ✅ Trouvé !
+```
+
+**2. `path_relative_to_include()`**
+```coffee
+# Calcule le chemin relatif depuis _common jusqu'au fichier actuel
+# Si vous êtes dans environments/dev/terragrunt.hcl :
+# Retourne : "environments/dev"
+# 
+# Utilisé pour générer : tp-fil-rouge-environments/dev/terraform.tfstate
+```
+
+**3. `get_parent_terragrunt_dir()`**
+```coffee
+# Retourne le chemin absolu du dossier contenant le terragrunt.hcl parent
+# Utile pour référencer des ressources relatives au fichier parent
+```
+
+### Ordre de priorité des variables
+
+```
+1. Variables en ligne de commande (plus haute priorité)
+   └─> terragrunt apply -var="instance_count=5"
+
+2. Fichier terraform.tfvars dans le dossier actuel
+   └─> environments/dev/terraform.tfvars
+
+3. Variables définies dans inputs{} du terragrunt.hcl local
+   └─> environments/dev/terragrunt.hcl
+
+4. Variables définies dans inputs{} du terragrunt.hcl parent
+   └─> _common/terragrunt.hcl
+
+5. Valeurs par défaut dans variables.tf (plus basse priorité)
+   └─> main-infrastructure/variables.tf
+```
+
+### Génération automatique de fichiers
+
+Terragrunt génère automatiquement certains fichiers avant d'exécuter Terraform :
+
+```coffee
+# Dans _common/terragrunt.hcl :
+generate "backend" {
+  path      = "backend.tf"          # Fichier à générer
+  if_exists = "overwrite_terragrunt" # Écraser si existe
+  contents  = <<EOF
+terraform {
+  backend "s3" {
+    # Configuration générée dynamiquement
+  }
+}
+EOF
+}
+```
+
+Ces fichiers sont créés dans `.terragrunt-cache/` et non dans votre code source.
+
 ## Déploiement avec Terragrunt
 
 ### Commandes de base
@@ -356,7 +450,7 @@ terragrunt apply --terragrunt-working-dir environments/staging
     ├── variables.tf      # 30 lignes (DUPLIQUÉ)
     └── terraform.tfvars  # 5 lignes
 ```
-**Total : 270 lignes dont 240 dupliquées (89% de duplication)**
+**270 lignes dont une grosse partie dupliquées**
 
 **Après (Part 11 - Terragrunt) :**
 
@@ -371,14 +465,7 @@ terragrunt apply --terragrunt-working-dir environments/staging
 ├── staging/terragrunt.hcl         # 15 lignes (spécifique)
 └── prod/terragrunt.hcl            # 15 lignes (spécifique)
 ```
-**Total : 170 lignes, 0% de duplication**
-
-### Gains mesurables
-
-1. **Réduction de 37% du code** (270 → 170 lignes)
-2. **Élimination complète de la duplication** (89% → 0%)
-3. **Configuration backend centralisée** (1 vs 3 fichiers)
-4. **Gestion des variables simplifiée** (héritage intelligent)
+**170 lignes, pas de duplication**
 
 ## Fonctionnalités avancées utilisées
 
