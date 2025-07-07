@@ -6,12 +6,8 @@ sidebar:
 ---
 
 
-## Objectifs 
-- Comprendre et savoir utiliser les objets fondamentaux de Terraform
 
----
-
-![](/img/terraform/terraform-data-arguments-and-attributes.png)
+![](/142_cours_provider_resource_data/images/terraform-data-arguments-and-attributes.png)
 
 ---
 
@@ -242,11 +238,4 @@ Il y a souvent beaucoup d'arguments dans une ressource.
 **Certains paramètres sont déclarés par l'utilisateur mais d'autres nécessitent une instanciation de la ressource demandée.**
 
 Par exemple, l'adresse IP n'est connue que lorsque l'instance est effectivement commandée et disponible.
-
-
----
-
-## Rappel des objectifs 
-- Comprendre et savoir utiliser les objets fondamentaux de Terraform
-
 

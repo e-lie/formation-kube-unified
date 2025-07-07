@@ -238,7 +238,3 @@ Effectue des conversions depuis et vers les formats YAML / JSON.
 
 ```
 
-## Rappel des objectifs 
-- Connaître et savoir utiliser les fonctions intégrées dans Terraform 
-
-

@@ -6,10 +6,6 @@ sidebar:
 ---
 
 
-## Objectifs 
-- Appréhender les outils qu'on utilisera au cours de la formation
-
----
 
 ## Les outils de la formation 
 

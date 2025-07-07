@@ -6,10 +6,7 @@ sidebar:
 ---
 
 
-## Objectifs 
-- Savoir utiliser les boucles et conditions logiques dans Terraform
 
----
 ## Les boucles 
 
 Le fait que HCL soit un langage destiné à une interprétation permet d'intégrer des appels à des boucles afin de générer par exemple plusieurs instances d'un même objet.
@@ -291,12 +288,4 @@ Dans l'exemple précédent, on avait le problème classique de la chaîne termin
 "0:apple, 1:kiwi, 2:bananas"
         
 ```
-
----
-
-
-## Rappel des objectifs 
-- Savoir utiliser les boucles et conditions logiques dans Terraform
-
-
 

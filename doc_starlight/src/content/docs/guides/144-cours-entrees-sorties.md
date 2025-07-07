@@ -6,17 +6,12 @@ sidebar:
 ---
 
 
-## Objectifs 
-- Comprendre les variables dans Terraform
-- Comprendre les outputs dans Terraform
-
----
 
 ## Terraform et le cycle des données 
 
 **Terraform suit un cycle de données en plusieurs étapes pour gérer l'infrastructure.**
 
-![](/img/terraform/terraform-data-arguments-and-attributes.png)
+![](/144_cours_entrees_sorties/images/terraform-data-arguments-and-attributes.png)
 
 
 Tout d'abord, Terraform doit connaître le contexte de l'utilisateur, tel que l'environnement, les mots de passe, les variables, et autres contraintes d'exécution.
@@ -220,8 +215,3 @@ Terraform masquera les valeurs marquées comme sensibles dans les messages de `t
 
 **Les données sensibles sont accessibles en clair dans l'état de Terraform.**
 
----
-
-## Rappel des objectifs 
-- Comprendre les variables dans Terraform
-- Comprendre les outputs dans Terraform

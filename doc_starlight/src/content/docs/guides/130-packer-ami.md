@@ -8,14 +8,13 @@ sidebar:
 
 Dans cette deuxième partie de TP nous allons créer une AMI personnalisée avec Packer puis l'utiliser dans Terraform. Nous partons d'Ubuntu 24.04 et ajoutons une clé SSH publique.
 
-## Structure du projet
+## Structure du projet a créer
 
 ```
 part2_packer_ami/
 ├── packer/
 │   └── ubuntu-custom.pkr.hcl
-├── main.tf
-└── part2.md
+└── main.tf
 ```
 
 ## Génération d'une paire de clés SSH

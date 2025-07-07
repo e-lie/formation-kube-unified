@@ -6,14 +6,8 @@ sidebar:
 ---
 
 
-![](/img/terraform/terraform-logo.png)
+![](/100_cours_intro/images/terraform-logo.png)
 
-
-## Objectifs 
-- Avoir une vision globale de la formation
-- Comprendre Terraform dans une logique IAC et Devops
-
----
 
 ## quelques aspets pratiques:
 

@@ -6,16 +6,9 @@ sidebar:
 ---
 
 
-![](/img/terraform/terraform-logo.png)
----
-
-## Objectifs
-- Avoir une perspective historique sur Terraform 
-
---- 
+![](/101_cours_about_terraform/images/terraform-logo.png)
 
 ### 2014 : Naissance (Terraform v0.1)
-
 
 **Le projet est né de l'absence d'alternative libre au projet cloudFormation de AWS**
 
@@ -121,10 +114,4 @@ De la même manière qu'il faut être vigilant quand on produit du code (dette t
 En l'occurence, le code sous licence libre offre une forme de garantie avec le fork. 
 
 Les annèes à venir nous diront ce qu'il en est pour Terraform / OpenTF
-
---- 
-
-## Objectifs
-- Avoir une perspective historique sur Terraform 
-
 

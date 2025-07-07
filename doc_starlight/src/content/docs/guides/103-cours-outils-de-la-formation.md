@@ -7,9 +7,9 @@ sidebar:
 
 
 
-![](/img/terraform/terraform-workflow.png)
+![](/103_cours_outils_de_la_formation/images/terraform-workflow.png)
 
-![](/img/terraform/terraform-planning-dependencies.png)
+![](/103_cours_outils_de_la_formation/images/terraform-planning-dependencies.png)
 
 ---
 

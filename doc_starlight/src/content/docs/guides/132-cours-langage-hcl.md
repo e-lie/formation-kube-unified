@@ -6,13 +6,8 @@ sidebar:
 ---
 
 
-## Objectifs 
-- Savoir utiliser le langage utilisé par Terraform
 
----
-
-
-![](/img/terraform/terraform-ast-1.png)
+![](/132_cours_langage_hcl/images/terraform-ast-1.png)
 
 ---
 
@@ -325,7 +320,7 @@ HCL utilise aussi la structure ternaire conditionnelle
 
 #### Un exemple réaliste 
 
-```coffeescript
+```coffee
 terraform {
   required_providers {
     aws = {
@@ -377,6 +372,7 @@ resource "aws_subnet" "az" {
   cidr_block = cidrsubnet(aws_vpc.main.cidr_block, 4, count.index+1)
 }
 ```
+
 ---
 
 **On peut agir dans le terminal avec cette recette** 
@@ -389,8 +385,4 @@ $ terraform console
 "10.1.0.0/16"
 
 ```
-
-## Rappel des objectifs 
-- Savoir utiliser le langage utilisé par Terraform
-
 

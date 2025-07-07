@@ -6,11 +6,6 @@ sidebar:
 ---
 
 
-## Objectifs 
-- Comprendre le fonctionnement et les limitations de l'état Terraform
-
----
-
 
 ## Qu'est ce que l'état de Terraform (state file) ?
 
@@ -63,11 +58,4 @@ Chaque fois que vous exécutez Terraform, il peut récupérer le dernier statut 
 Le format de fichier d'état est une API privée destinée uniquement à un usage interne dans Terraform. Vous ne devez jamais modifier les fichiers d'état Terraform à la main ou écrire du code qui les lit directement.
 
 Seules les commandes `terraform import` ou `terraform state` sont à utiliser pour manipuler ce fichier depuis l'extérieur de Terraform.
-
-
---- 
-
-
-## Rappel des objectifs 
-- Comprendre le fonctionnement et les limitations de l'état Terraform
 

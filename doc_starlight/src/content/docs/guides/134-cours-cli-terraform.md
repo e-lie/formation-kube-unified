@@ -5,13 +5,11 @@ sidebar:
   order: 134
 ---
 
-## Objectifs 
-- Comprendre et utiliser les principales commandes de la CLI terraform
----
 
-![](/img/terraform/terraform-ast-2.png)
 
-![](/img/terraform/terraform-workflow-diff.png)
+![](/134_cours_cli_terraform/images/terraform-ast-2.png)
+
+![](/134_cours_cli_terraform/images/terraform-workflow-diff.png)
 
 ---
 
@@ -32,7 +30,7 @@ sidebar:
 
 **Une autre solution est Terraform Enterprise qui présente une interface HTML.**
 
-![](/img/terraform/terraform-tf-cloud.png)
+![](/134_cours_cli_terraform/images/terraform-tf-cloud.png)
 
 
 Terraform Cloud est le SASS proposé par la société Hashicorp pour cet outil.
@@ -307,7 +305,7 @@ On voit que la commande `init` crée deux éléments cachés
 
 **La commande `plan` encapsule la logique de gestion du cycle de vie pour planifier les actions nécessaires.**
 
-![](/img/terraform/terraform-plan-schema.png)
+![](/134_cours_cli_terraform/images/terraform-plan-schema.png)
 
 Elle est fondamentale dans le fonctionnement de Terraform.
 
@@ -423,10 +421,4 @@ foo = "bar"
 l   = [1, 2, 3]
 
 ```
-
-
----
-
-## Rappel des objectifs 
-- Comprendre et utiliser les principales commandes de la CLI terraform
 
