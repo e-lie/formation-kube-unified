@@ -29,7 +29,6 @@ Pour ce TP, nous utilisons l'approche par répertoires séparés, qui est la mé
 **Avantages de l'approche par répertoires :**
 - **Isolation complète** : Chaque environnement a son propre état Terraform
 - **Sécurité renforcée** : Impossible de modifier accidentellement le mauvais environnement
-- **Clarté** : Structure explicite et facile à comprendre
 - **Flexibilité** : Configurations différentes par environnement
 - **CI/CD friendly** : Pipelines simples à mettre en place
 
@@ -316,7 +315,7 @@ Cette vérification confirme que la structure multi-environnements est correctem
 
 ## Bonnes pratiques
 
-### 1. Isolation des états
+### Isolation des états
 
 Chaque environnement doit avoir son propre état Terraform :
 
@@ -331,7 +330,7 @@ key = "staging/terraform.tfstate"
 key = "prod/terraform.tfstate"
 ```
 
-### 2. Contrôle d'accès
+### Contrôle d'accès
 
 Implémentez des politiques IAM différenciées :
 
@@ -384,7 +383,7 @@ resource "aws_iam_policy" "terraform_prod" {
 }
 ```
 
-### 3. Validation et tests
+### Validation et tests
 
 Créez `scripts/validate.sh` :
 
@@ -415,7 +414,7 @@ done
 echo "✅ All environments validated successfully!"
 ```
 
-### 4. Pipeline CI/CD
+### Exemple de pipeline CI/CD
 
 Exemple de configuration GitLab CI :
 
@@ -572,21 +571,13 @@ cd ../..
 - Infrastructure de production complète
 - Confirmation manuelle requise avant déploiement
 
-## Points clés à retenir
-
-1. **Isolation** : Chaque environnement doit être complètement isolé
-2. **Réutilisation** : Maximiser la réutilisation du code via les modules
-3. **Configuration** : Centraliser les différences dans des fichiers de variables
-4. **Sécurité** : Implémenter des contrôles stricts pour la production
-5. **Automatisation** : Utiliser des pipelines CI/CD pour réduire les erreurs
-
 ## Ressources supplémentaires
 
 - [Terraform State Management](https://www.terraform.io/docs/state/index.html)
 - [AWS Well-Architected Framework - Reliability Pillar](https://docs.aws.amazon.com/wellarchitected/latest/reliability-pillar/welcome.html)
 - [HashiCorp Best Practices for Multi-Environment](https://learn.hashicorp.com/tutorials/terraform/organize-configuration)
 
-## Conclusion : bonnes pratiques de gestion multi-environnements
+## Conclusion : gestion multi-environnements
 
 ### Convention de structure
 
