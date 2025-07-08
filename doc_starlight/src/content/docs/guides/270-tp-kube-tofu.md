@@ -15,7 +15,7 @@ Ce TP déploie un cluster Kubernetes multi-nœuds sur Hetzner Cloud en utilisant
 ![Architecture Kubernetes sur Hetzner Cloud](/270_tp_kube_tofu/images/architecture.png)
 
 > **Note :** Le diagramme source est disponible dans le fichier `images/architecture.mmd` et peut être modifié puis recompilé avec la commande :  
-> `mmdc -i images/architecture.mmd -o images/architecture.png -t dark -b transparent`
+> `mmdc -i images/architecture.mmd -o images/architecture.png -t dark -b transparent -s 2 -w 1200`
 
 ## Structure des modules
 
