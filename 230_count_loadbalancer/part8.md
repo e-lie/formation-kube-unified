@@ -26,11 +26,14 @@ Un **load balancer** (répartiteur de charge) distribue intelligemment le trafic
 ## Architecture cible
 
 Notre objectif est de créer une infrastructure avec :
-- **3 serveurs web** dans la même région
+- **3 serveurs web** répartis sur 2 zones de disponibilité
+- **2 subnets publics** dans des AZ différentes (exigence AWS pour l'ALB)
 - Un **Application Load Balancer (ALB)** automatiquement créé si le nombre de serveurs > 1
 - **Target Group** pour gérer la santé des serveurs
 - **Health checks** automatiques
 - Configuration dynamique basée sur le nombre d'instances
+
+**Note importante** : AWS exige qu'un Application Load Balancer soit déployé dans au minimum 2 zones de disponibilité. Cette architecture reflète cette contrainte en créant 2 subnets publics.
 
 ![Architecture Part 8 - Load Balancer et haute disponibilité](images/architecture_part8.png)
 
@@ -48,7 +51,15 @@ variable "instance_count" {
   type        = number
   default     = 3
 }
+
+variable "public_subnet_cidr_2" {
+  description = "CIDR block for second public subnet (required for ALB)"
+  type        = string
+  default     = "10.0.2.0/24"
+}
 ```
+
+**Important** : La variable `public_subnet_cidr_2` est nécessaire car AWS exige qu'un Application Load Balancer soit déployé dans **au minimum 2 zones de disponibilité différentes** pour garantir la haute disponibilité. Nous devons donc créer un second subnet public.
 
 ### Modification de webserver.tf avec count
 
@@ -90,6 +101,44 @@ resource "aws_instance" "web_server" {
   }
 }
 ```
+
+### Modification de l'infrastructure VPC
+
+Avant de configurer les security groups, nous devons modifier `vpc.tf` pour ajouter un second subnet public requis par l'ALB. Ajoutez les ressources suivantes à votre fichier `vpc.tf` :
+
+```coffee
+# Data source pour les zones de disponibilité
+data "aws_availability_zones" "available" {
+  state = "available"
+}
+
+# Subnet public 2 (pour ALB multi-AZ)
+resource "aws_subnet" "public_2" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = var.public_subnet_cidr_2
+  availability_zone       = data.aws_availability_zones.available.names[1]
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name      = "${terraform.workspace}-public-subnet-2"
+    Workspace = terraform.workspace
+    Feature   = var.feature_name
+  }
+}
+
+# Association subnet 2 avec route table
+resource "aws_route_table_association" "public_2" {
+  subnet_id      = aws_subnet.public_2.id
+  route_table_id = aws_route_table.public.id
+}
+```
+
+**Pourquoi un second subnet ?**
+
+AWS impose qu'un Application Load Balancer soit distribué sur **au minimum 2 zones de disponibilité** différentes. Cette exigence garantit :
+- **Haute disponibilité** : Si une AZ tombe en panne, l'ALB continue à fonctionner
+- **Répartition de charge géographique** : Le trafic est distribué entre les zones
+- **Respect des SLA AWS** : AWS ne garantit ses SLA que si cette condition est respectée
 
 ### Gestion des security groups
 
@@ -414,6 +463,7 @@ aws_region           = "eu-west-3"
 aws_profile          = "default"
 vpc_cidr             = "10.0.0.0/16"
 public_subnet_cidr   = "10.0.1.0/24"
+public_subnet_cidr_2 = "10.0.2.0/24"
 instance_type        = "t2.micro"
 ssh_key_path         = "~/.ssh/id_terraform"
 feature_name         = "load-balanced-cluster"
@@ -490,6 +540,8 @@ aws elbv2 describe-target-health \
 
 **Scalabilité** : Ajout facile de nouvelles instances selon la charge.
 
+**Multi-AZ obligatoire** : AWS exige que l'ALB soit déployé dans au minimum 2 zones de disponibilité, d'où la nécessité de créer 2 subnets publics distincts.
+
 ## Conclusion
 
 Cette partie vous a montré comment utiliser `count` pour multiplier les ressources et implémenter un load balancer pour la haute disponibilité. Nous avons créé une infrastructure qui s'adapte automatiquement au nombre d'instances : une instance unique sans load balancer, ou plusieurs instances derrière un ALB.
@@ -498,6 +550,7 @@ Points clés à retenir :
 - `count` permet de créer facilement plusieurs instances d'une ressource
 - `for_each` offre plus de flexibilité pour des configurations variées
 - Un load balancer améliore la disponibilité et la performance
+- **AWS exige 2+ zones de disponibilité pour l'ALB** : toujours prévoir plusieurs subnets
 - La configuration conditionnelle permet une infrastructure adaptative
 - Les health checks automatiques garantissent la fiabilité du service
 
