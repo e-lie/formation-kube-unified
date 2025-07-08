@@ -485,62 +485,7 @@ curl $(terraform output -raw web_url)
 terraform workspace new multi-server
 terraform plan -var-file="multi-server.tfvars" -out=multi.tfplan
 terraform apply multi.tfplan
-
-# Test du load balancer
-for i in {1..10}; do curl $(terraform output -raw web_url); sleep 1; done
 ```
-
-### Vérification de la haute disponibilité
-
-```bash
-# Vérifier les instances
-terraform output instance_ids
-terraform output instance_public_ips
-
-# Tester chaque serveur individuellement
-terraform output -json individual_server_urls | jq -r '.[]' | while read url; do
-  echo "Testing $url"
-  curl "$url"
-done
-
-# Vérifier le health check du load balancer
-aws elbv2 describe-target-health \
-  --target-group-arn $(aws elbv2 describe-target-groups \
-    --names "${terraform.workspace}-web-tg" \
-    --query 'TargetGroups[0].TargetGroupArn' \
-    --output text) \
- 
-```
-
-## Avantages et bonnes pratiques
-
-### Avantages de count
-
-**Simplicité** : Facile à comprendre et implémenter pour des ressources identiques.
-
-**Performance** : Création parallèle des ressources pour un déploiement rapide.
-
-**Flexibilité numérique** : Ajustement facile du nombre d'instances via une variable.
-
-### Avantages de for_each
-
-**Clés stables** : Évite les problèmes de réindexation lors des modifications.
-
-**Configuration flexible** : Chaque instance peut avoir une configuration différente.
-
-**Lisibilité** : Les clés nommées rendent la configuration plus claire.
-
-### Haute disponibilité
-
-**Redondance** : Plusieurs serveurs éliminent les points de défaillance unique.
-
-**Répartition de charge** : Distribution intelligente du trafic entre les serveurs.
-
-**Health checks** : Détection automatique des serveurs défaillants.
-
-**Scalabilité** : Ajout facile de nouvelles instances selon la charge.
-
-**Multi-AZ obligatoire** : AWS exige que l'ALB soit déployé dans au minimum 2 zones de disponibilité, d'où la nécessité de créer 2 subnets publics distincts.
 
 ## Conclusion
 
