@@ -50,3 +50,5 @@ secrets.auto.tfvars
 madlibs
 
 .terragrunt-cache
+
+secrets.env

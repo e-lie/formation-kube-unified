@@ -225,7 +225,7 @@ Souvent, les modules du Registry utiliseront eux-mêmes des modules : c'est ce 
 
 **La plupart du temps on crée ses modules au sein de son projet, la syntaxe dans ce cas fait appel à un dossier relatif.**
 
-```coffeescript
+```coffee
 
 module "webservers" {
   source = "./modules/webservers"
@@ -307,7 +307,7 @@ On utillise donc des ressources séparées, qui seront aggrégées au moment de 
 
 C'est pourquoi on trouve dans les listes d'objets mis à disposition par les providers une myriade de sous-éléments.
 
-```coffeescript
+```coffee
 resource "aws_security_group" "alb" {
   name = "${var.cluster_name}-alb"
 }
@@ -324,7 +324,8 @@ resource "aws_security_group_rule" "allow_http_inbound" {
 ```
 
 En exportant le Security Group...
-```coffeescript
+
+```coffee
 output "alb_security_group_id" {
   value       = aws_security_group.alb.id
   description = "The ID of the Security Group attached to the load balancer"
@@ -334,7 +335,7 @@ output "alb_security_group_id" {
 
 On peut le réutiliser pour ajouter de nouvelles règles hors module
 
-```coffeescript
+```coffee
 module "webservers" {
   source = "./modules/webservers"
   ...

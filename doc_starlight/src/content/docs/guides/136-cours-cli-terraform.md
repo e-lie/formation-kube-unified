@@ -2,14 +2,14 @@
 title: "Cours - La CLI de Terraform"
 description: "Guide Cours - La CLI de Terraform"
 sidebar:
-  order: 134
+  order: 136
 ---
 
 
 
-![](/134_cours_cli_terraform/images/terraform-ast-2.png)
+![](/136_cours_cli_terraform/images/terraform-ast-2.png)
 
-![](/134_cours_cli_terraform/images/terraform-workflow-diff.png)
+![](/136_cours_cli_terraform/images/terraform-workflow-diff.png)
 
 ---
 
@@ -30,7 +30,7 @@ sidebar:
 
 **Une autre solution est Terraform Enterprise qui présente une interface HTML.**
 
-![](/134_cours_cli_terraform/images/terraform-tf-cloud.png)
+![](/136_cours_cli_terraform/images/terraform-tf-cloud.png)
 
 
 Terraform Cloud est le SASS proposé par la société Hashicorp pour cet outil.
@@ -305,7 +305,7 @@ On voit que la commande `init` crée deux éléments cachés
 
 **La commande `plan` encapsule la logique de gestion du cycle de vie pour planifier les actions nécessaires.**
 
-![](/134_cours_cli_terraform/images/terraform-plan-schema.png)
+![](/136_cours_cli_terraform/images/terraform-plan-schema.png)
 
 Elle est fondamentale dans le fonctionnement de Terraform.
 
