@@ -4,28 +4,28 @@ graph TB
         User[Utilisateur]
     end
     
-    subgraph "Hetzner Cloud"
-        subgraph "Node 1 - Master"
+    subgraph "Scaleway Cloud"
+        subgraph "Node 1 - Master (DEV1-M)"
             N1_PUB[IP Publique]
-            N1_PRIV[IP Privée Hetzner]
+            N1_PRIV[IP Privée Scaleway]
             N1_VPN[IP VPN WireGuard<br/>10.0.1.1]
             N1_K8S[Kubernetes Master<br/>+ etcd]
             N1_UFW[UFW Firewall]
             N1_CILIUM[Cilium CNI]
         end
         
-        subgraph "Node 2 - Worker"
+        subgraph "Node 2 - Worker (DEV1-M)"
             N2_PUB[IP Publique]
-            N2_PRIV[IP Privée Hetzner]
+            N2_PRIV[IP Privée Scaleway]
             N2_VPN[IP VPN WireGuard<br/>10.0.1.2]
             N2_K8S[Kubernetes Worker<br/>+ etcd]
             N2_UFW[UFW Firewall]
             N2_CILIUM[Cilium CNI]
         end
         
-        subgraph "Node 3 - Worker"
+        subgraph "Node 3 - Worker (DEV1-M)"
             N3_PUB[IP Publique]
-            N3_PRIV[IP Privée Hetzner]
+            N3_PRIV[IP Privée Scaleway]
             N3_VPN[IP VPN WireGuard<br/>10.0.1.3]
             N3_K8S[Kubernetes Worker<br/>+ etcd]
             N3_UFW[UFW Firewall]
