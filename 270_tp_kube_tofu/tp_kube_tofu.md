@@ -16,7 +16,7 @@ Ce TP déploie un cluster Kubernetes multi-nœuds sur Hetzner Cloud en utilisant
 
 ## Structure des modules
 
-Le projet est organisé en modules réutilisables :
+Le projet utilise une organisation modulaire simplifiée où tous les modules sont regroupés dans un dossier `modules/` unique. Cette approche facilite la navigation et la maintenance :
 
 ```sh
 270_tp_kube_tofu/
