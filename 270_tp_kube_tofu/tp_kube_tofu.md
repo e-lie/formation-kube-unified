@@ -3,13 +3,13 @@ title: TP Kubernetes installé à la main - intégration multiprovider
 weight: 15
 ---
 
-Ce TP déploie un cluster Kubernetes multi-nœuds sur Hetzner Cloud en utilisant OpenTofu (fork open-source de Terraform). L'infrastructure inclut un réseau VPN sécurisé avec WireGuard, un cluster etcd séparé, et la configuration automatique de Kubernetes avec Cilium comme CNI.
+Ce TP déploie un cluster Kubernetes multi-nœuds sur Scaleway en utilisant OpenTofu (fork open-source de Terraform). L'infrastructure inclut un réseau VPN sécurisé avec WireGuard, un cluster etcd séparé, et la configuration automatique de Kubernetes avec Cilium comme CNI.
 
 ## Vue d'ensemble de l'architecture
 
 ### Schéma de l'infrastructure
 
-![Architecture Kubernetes sur Hetzner Cloud](images/architecture.png)
+![Architecture Kubernetes sur Scaleway](images/architecture.png)
 
 > **Note :** Le diagramme source est disponible dans le fichier `images/architecture.mmd` et peut être modifié puis recompilé avec la commande :  
 > `mmdc -i images/architecture.mmd -o images/architecture.png -t dark -b transparent -s 2 -w 1200`
@@ -28,13 +28,13 @@ Le projet utilise une organisation modulaire simplifiée où tous les modules so
 │   ├── architecture.mmd        # Source Mermaid
 │   └── architecture.png        # Diagramme compilé
 └── modules/                    # Tous les modules Terraform
-    ├── hcloud/                 # Provider Hetzner Cloud
+    ├── scaleway/               # Provider Scaleway Cloud
     ├── digitalocean/           # Configuration DNS
     ├── wireguard/              # VPN WireGuard
     ├── ufw/                    # Pare-feu UFW
     ├── etcd/                   # Cluster etcd
     ├── kubernetes/             # Installation Kubernetes
-    ├── swap/                   # Désactivation du swap
+    ├── swap/                   # Configuration du swap
     ├── nginx/                  # Déploiement nginx
     └── file_output/            # Génération de fichiers
 ```
@@ -43,8 +43,8 @@ Le projet utilise une organisation modulaire simplifiée où tous les modules so
 
 Les modules sont déployés dans cet ordre précis pour respecter les dépendances :
 
-1. **hcloud** : Création des serveurs virtuels sur Hetzner Cloud
-2. **swap** : Désactivation du swap (requis pour Kubernetes)
+1. **scaleway** : Création des serveurs virtuels sur Scaleway
+2. **swap** : Configuration du swap (compatible avec Kubernetes)
 3. **digitalocean** : Configuration des enregistrements DNS
 4. **wireguard** : Établissement du réseau VPN sécurisé
 5. **ufw** : Configuration des règles de pare-feu
@@ -58,9 +58,9 @@ Les modules sont déployés dans cet ordre précis pour respecter les dépendanc
 ### Prérequis
 
 1. **OpenTofu** ou **Terraform** >= 1.0
-2. **Compte Hetzner Cloud** avec un token API
+2. **CLI Scaleway** configuré avec un profil
 3. **Compte DigitalOcean** avec un token API (pour DNS)
-4. **Clés SSH** configurées
+4. **Clés SSH** configurées dans Scaleway
 5. **Domaine** avec DNS géré par DigitalOcean
 
 ### Variables principales
@@ -82,21 +82,43 @@ hostname_format = "kube-stagiaire1%d"
 # Réseaux
 overlay_cidr = "10.96.0.0/16"  # Réseau pods Kubernetes
 
-# Configuration Hetzner
-hcloud_location = "nbg1"        # Nuremberg, Allemagne
-hcloud_type = "cx11"           # Type d'instance (1 vCPU, 2GB RAM)
-hcloud_image = "ubuntu-24.04"   # Image Ubuntu 24.04
+# Configuration Scaleway
+scaleway_zone = "fr-par-1"         # Paris, France
+scaleway_type = "DEV1-M"           # Type d'instance (2 vCPU, 4GB RAM)
+scaleway_image = "ubuntu_jammy"    # Image Ubuntu 22.04 (Jammy)
+scaleway_profile = "default"       # Profil CLI Scaleway
 ```
 
 ## Déploiement
+
+### 0. Configuration préalable de Scaleway CLI
+
+Avant de déployer, configurez la CLI Scaleway :
+
+```bash
+# Installer la CLI Scaleway
+curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/get.sh | sh
+
+# Configurer le profil (nécessite un token API Scaleway)
+scw init
+
+# Vérifier la configuration
+scw config list
+
+# Créer et configurer une clé SSH
+scw account ssh-key create name=id_stagiaire public-key="$(cat ~/.ssh/id_rsa.pub)"
+```
 
 ### 1. Configuration des variables
 
 Créez un fichier `terraform.tfvars` :
 
 ```hcl
-hcloud_token = "votre-token-hetzner"
-hcloud_ssh_keys = ["nom-de-votre-cle-ssh"]
+# Configuration Scaleway (authentification via CLI profile)
+scaleway_profile = "default"
+scaleway_ssh_keys = ["nom-de-votre-cle-ssh"]
+
+# Configuration DNS
 digitalocean_token = "votre-token-digitalocean"
 domain = "votre-domaine.com"
 subdomain = "votre-sous-domaine"
@@ -115,8 +137,8 @@ tofu plan
 tofu apply
 
 # Récupérer la configuration kubectl
-scp root@<IP-MASTER>:/root/.kube/config ~/.kube/config-hetzner
-export KUBECONFIG=~/.kube/config-hetzner
+scp root@<IP-MASTER>:/etc/kubernetes/admin.conf ~/.kube/config-scaleway
+export KUBECONFIG=~/.kube/config-scaleway
 
 # Vérifier le cluster
 kubectl get nodes
@@ -125,7 +147,7 @@ kubectl get pods -A
 
 ### 3. Déploiement d'applications
 
-Le module `kubernetes_apps/nginx` déploie automatiquement un exemple nginx :
+Le module `nginx` déploie automatiquement un exemple nginx :
 
 ```bash
 # Vérifier le déploiement nginx
@@ -138,8 +160,8 @@ kubectl get pods -l app=nginx
 
 ### Infrastructure
 
-- **3 serveurs** Ubuntu 24.04 sur Hetzner Cloud
-- **Réseau privé** Hetzner pour communication interne
+- **3 serveurs** Ubuntu 22.04 (Jammy) sur Scaleway
+- **Instances DEV1-M** (2 vCPU, 4GB RAM) pour tous les nœuds
 - **VPN WireGuard** pour sécuriser les communications
 - **Pare-feu UFW** avec règles restrictives
 
@@ -160,11 +182,13 @@ kubectl get pods -l app=nginx
 
 ## Module de déploiement nginx
 
-Le module `kubernetes_apps/nginx` utilise le provider Kubernetes pour déployer :
+Le module `nginx` utilise le provider Kubernetes pour déployer :
 
-- Un Deployment nginx avec 3 réplicas
-- Un Service de type LoadBalancer
-- Des labels et sélecteurs appropriés
+- **Déploiement standard** : nginx avec 3 réplicas et configuration de ressources
+- **Déploiement personnalisé** : nginx avec page d'accueil custom via ConfigMap
+- **Services** : ClusterIP pour accès interne et LoadBalancer pour accès externe
+- **Sondes de santé** : liveness et readiness probes
+- **Namespace** : namespace dédié (optionnel)
 
 Ce module démontre l'utilisation du provider Kubernetes pour gérer des ressources directement depuis OpenTofu/Terraform.
 
@@ -182,20 +206,22 @@ rm -f hosts kubeconfig.yaml
 
 ## Points d'attention
 
-1. **Coûts** : Les serveurs Hetzner sont facturés à l'heure
-2. **Sécurité** : Assurez-vous de sécuriser vos tokens API
+1. **Coûts** : Les serveurs Scaleway sont facturés à l'heure
+2. **Authentification** : Le provider Scaleway utilise le profil CLI configuré
 3. **DNS** : La propagation DNS peut prendre quelques minutes
 4. **Firewall** : Seuls les ports nécessaires sont ouverts
-5. **Backups** : Pensez à sauvegarder les données etcd pour la production
+5. **Swap** : Le swap est maintenant supporté par Kubernetes (configuré via kubelet)
+6. **Backups** : Pensez à sauvegarder les données etcd pour la production
 
 ## Dépannage
 
 ### Problèmes courants
 
-1. **Connexion SSH impossible** : Vérifiez que votre clé SSH est bien configurée dans Hetzner
-2. **DNS non résolu** : Attendez la propagation DNS (jusqu'à 5 minutes)
-3. **Kubernetes non accessible** : Vérifiez que WireGuard est actif sur tous les nœuds
-4. **Pods en erreur** : Vérifiez les logs avec `kubectl logs`
+1. **Connexion SSH impossible** : Vérifiez que votre clé SSH est bien configurée dans Scaleway
+2. **Authentification Scaleway** : Vérifiez la configuration de votre CLI avec `scw config list`
+3. **DNS non résolu** : Attendez la propagation DNS (jusqu'à 5 minutes)
+4. **Kubernetes non accessible** : Vérifiez que WireGuard est actif sur tous les nœuds
+5. **Pods en erreur** : Vérifiez les logs avec `kubectl logs`
 
 ### Commandes utiles
 
