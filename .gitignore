@@ -52,3 +52,11 @@ madlibs
 .terragrunt-cache
 
 secrets.env
+
+
+*.dist
+
+
+
+public_ips.txt
+base_domain.txt
