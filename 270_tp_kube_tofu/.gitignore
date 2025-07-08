@@ -1,0 +1,16 @@
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate*
+.terraform.tfstate*
+terraform.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+*.dist
+
+
+
+public_ips.txt
+base_domain.txt

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kubernetes + OpenTofu - ${cluster_name}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            max-width: 800px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+        
+        .emoji {
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .info-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .info-card h3 {
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .info-card p {
+            color: #6c757d;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        .tech-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+        
+        .status {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin-top: 20px;
+            display: inline-block;
+        }
+        
+        .hostname {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e9ecef;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="emoji pulse">🚀</div>
+        <h1>Kubernetes + OpenTofu</h1>
+        <p style="font-size: 1.2em; color: #6c757d; margin-bottom: 30px;">
+            Infrastructure as Code sur Hetzner Cloud
+        </p>
+        
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>🎯 Cluster</h3>
+                <p>${cluster_name}</p>
+            </div>
+            <div class="info-card">
+                <h3>📦 Namespace</h3>
+                <p>${namespace}</p>
+            </div>
+            <div class="info-card">
+                <h3>🔄 Replicas</h3>
+                <p>${replicas}</p>
+            </div>
+            <div class="info-card">
+                <h3>⚡ CNI</h3>
+                <p>Cilium</p>
+            </div>
+        </div>
+        
+        <div class="tech-badges">
+            <span class="badge">Kubernetes</span>
+            <span class="badge">OpenTofu</span>
+            <span class="badge">Hetzner Cloud</span>
+            <span class="badge">WireGuard VPN</span>
+            <span class="badge">Cilium CNI</span>
+            <span class="badge">nginx Alpine</span>
+            <span class="badge">etcd Cluster</span>
+        </div>
+        
+        <div class="status">
+            ✅ Déployé avec succès !
+        </div>
+        
+        <div class="hostname">
+            <strong>Pod Hostname:</strong> <span id="hostname">Loading...</span>
+        </div>
+        
+        <script>
+            // Simuler l'affichage du hostname du pod
+            setTimeout(() => {
+                const hostname = window.location.hostname || 'nginx-pod-' + Math.random().toString(36).substr(2, 9);
+                document.getElementById('hostname').textContent = hostname;
+            }, 1000);
+            
+            // Effet de rafraîchissement périodique pour simuler un environnement vivant
+            setInterval(() => {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('fr-FR');
+                document.title = `Kubernetes + OpenTofu - ${timeStr}`;
+            }, 1000);
+        </script>
+    </div>
+</body>
+</html>
