@@ -72,6 +72,7 @@ cp ../part9_refactorisation_modules/outputs.tf .
 rm vpc.tf webserver.tf loadbalancer.tf
 ```
 
+
 ### Commentons le code modularisé
 
 Notre nouvelle configuration `main.tf` est maintenant beaucoup plus lisible et organisée. Au lieu d'avoir toutes les ressources déclarées au même endroit, nous utilisons trois modules distincts :

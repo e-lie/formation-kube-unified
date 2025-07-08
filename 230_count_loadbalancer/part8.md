@@ -57,41 +57,100 @@ variable "public_subnet_cidr_2" {
   type        = string
   default     = "10.0.2.0/24"
 }
+
+variable "ssh_key_path" {
+  description = "Path to SSH private key"
+  type        = string
+  default     = "~/.ssh/id_terraform"
+}
+
+variable "feature_name" {
+  description = "Name of the feature being tested"
+  type        = string
+  default     = "load-balancer"
+}
 ```
+
 
 **Important** : La variable `public_subnet_cidr_2` est nécessaire car AWS exige qu'un Application Load Balancer soit déployé dans **au minimum 2 zones de disponibilité différentes** pour garantir la haute disponibilité. Nous devons donc créer un second subnet public.
 
 ### Modification de webserver.tf avec count
 
-Transformons notre instance unique en plusieurs instances avec `count` :
+Transformons notre instance unique en plusieurs instances avec `count` et user-data :
 
 ```coffee
-...
-# Instances EC2 avec count
+# Data source pour l'AMI Ubuntu standard
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+# Template pour user-data
+data "template_file" "user_data" {
+  count = var.instance_count
+  
+  template = <<-EOF
+#!/bin/bash
+
+# Mettre à jour le système
+apt-get update
+
+# Créer l'utilisateur et configurer SSH
+if ! id "terraform" &>/dev/null; then
+  useradd -m -s /bin/bash terraform
+  usermod -aG sudo terraform
+  echo 'terraform ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+fi
+
+# Créer le répertoire .ssh
+mkdir -p /home/terraform/.ssh
+chmod 700 /home/terraform/.ssh
+
+# Ajouter la clé publique SSH
+echo "${ssh_public_key}" > /home/terraform/.ssh/authorized_keys
+chmod 600 /home/terraform/.ssh/authorized_keys
+chown -R terraform:terraform /home/terraform/.ssh
+
+# Installer et configurer nginx
+apt-get install -y nginx
+systemctl start nginx
+systemctl enable nginx
+
+# Créer la page d'accueil avec numéro de serveur
+echo '<h1>Server ${server_number} - Feature: ${feature_name} (${workspace})</h1>' > /var/www/html/index.html
+echo '<p>Instance ID: ${instance_id}</p>' >> /var/www/html/index.html
+echo '<p>Load balancer avec user-data</p>' >> /var/www/html/index.html
+
+echo "Configuration serveur ${server_number} terminée avec user-data"
+EOF
+
+  vars = {
+    ssh_public_key = file("${var.ssh_key_path}.pub")
+    feature_name   = var.feature_name
+    workspace      = terraform.workspace
+    server_number  = count.index + 1
+    instance_id    = count.index
+  }
+}
+
+# Instances EC2 avec count et user-data
 resource "aws_instance" "web_server" {
   count                  = var.instance_count
-  ami                    = data.aws_ami.custom_ubuntu.id
+  ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web_servers.id]
-
-  connection {
-    type        = "ssh"
-    user        = "root"
-    private_key = file(var.ssh_key_path)
-    host        = self.public_ip
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "apt-get update",
-      "apt-get install -y nginx",
-      "systemctl start nginx",
-      "systemctl enable nginx",
-      "echo '<h1>Server ${count.index + 1} - Feature: ${var.feature_name} (${terraform.workspace})</h1>' > /var/www/html/index.html",
-      "echo '<p>Instance ID: ${count.index}</p>' >> /var/www/html/index.html"
-    ]
-  }
+  user_data              = data.template_file.user_data[count.index].rendered
 
   tags = {
     Name      = "${terraform.workspace}-web-server-${count.index + 1}"
@@ -101,6 +160,7 @@ resource "aws_instance" "web_server" {
   }
 }
 ```
+
 
 ### Modification de l'infrastructure VPC
 

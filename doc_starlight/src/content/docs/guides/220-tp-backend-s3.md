@@ -30,6 +30,7 @@ Dans notre projet principal, copiez le contenu de part6 vers part7 :
 cp -r part6_terraform_state/* part7_backend_s3/
 ```
 
+
 Créez un fichier `backend.tf` (et supprimez `versions.tf` qui est ici remplacé) avec la configuration du backend distant :
 
 ```coffee

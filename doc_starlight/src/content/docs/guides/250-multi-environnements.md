@@ -87,6 +87,7 @@ mkdir -p environments/{dev,staging,prod}
 mkdir -p global scripts
 ```
 
+
 ### Étape 2 : Copier les fichiers de base vers tous les environnements
 
 Nous allons partir des fichiers de la Part 9 et les adapter pour chaque environnement :

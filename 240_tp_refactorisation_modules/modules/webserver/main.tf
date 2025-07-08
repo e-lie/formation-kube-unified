@@ -1,44 +1,42 @@
-# Data source pour l'AMI personnalisée
-data "aws_ami" "custom_ubuntu" {
+# Data source pour l'AMI Ubuntu standard
+data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["self"]
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
-    values = ["ubuntu-22.04-custom-<votre-prenom>-*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
   }
 
   filter {
-    name   = "state"
-    values = ["available"]
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
 }
 
-# Instances EC2 avec count
+# Template pour user-data
+data "template_file" "user_data" {
+  count = var.instance_count
+  
+  template = file("${path.module}/user-data.sh.tpl")
+
+  vars = {
+    ssh_public_key = file("${var.ssh_key_path}.pub")
+    feature_name   = var.feature_name
+    workspace      = var.workspace
+    server_number  = count.index + 1
+    instance_id    = count.index
+  }
+}
+
+# Instances EC2 avec count et user-data
 resource "aws_instance" "web_server" {
   count                  = var.instance_count
-  ami                    = data.aws_ami.custom_ubuntu.id
+  ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
   subnet_id              = var.subnet_id
   vpc_security_group_ids = [var.security_group_id]
-
-  connection {
-    type        = "ssh"
-    user        = "root"
-    private_key = file(var.ssh_key_path)
-    host        = self.public_ip
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "apt-get update",
-      "apt-get install -y nginx",
-      "systemctl start nginx",
-      "systemctl enable nginx",
-      "echo '<h1>Server ${count.index + 1} - Feature: ${var.feature_name} (${var.workspace})</h1>' > /var/www/html/index.html",
-      "echo '<p>Instance ID: ${count.index}</p>' >> /var/www/html/index.html"
-    ]
-  }
+  user_data              = data.template_file.user_data[count.index].rendered
 
   tags = {
     Name      = "${var.workspace}-web-server-${count.index + 1}"

@@ -76,13 +76,79 @@ output "subnet_id" {
 
 ### Serveur web
 
-De même créez un fichier `webserver.tf` contenant l'instance EC2 et les ressources associées :
+De même créez un fichier `webserver.tf` contenant l'instance EC2 et les ressources associées avec la nouvelle approche user-data :
 
 ```coffee
-# Data source pour l'AMI personnalisée
-...
-# Instance EC2
-...
+# Data source pour l'AMI Ubuntu standard
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+# Template pour user-data
+data "template_file" "user_data" {
+  template = <<-EOF
+#!/bin/bash
+
+# Mettre à jour le système
+apt-get update
+
+# Créer l'utilisateur et configurer SSH
+if ! id "terraform" &>/dev/null; then
+  useradd -m -s /bin/bash terraform
+  usermod -aG sudo terraform
+  echo 'terraform ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+fi
+
+# Créer le répertoire .ssh
+mkdir -p /home/terraform/.ssh
+chmod 700 /home/terraform/.ssh
+
+# Ajouter la clé publique SSH
+echo "${ssh_public_key}" > /home/terraform/.ssh/authorized_keys
+chmod 600 /home/terraform/.ssh/authorized_keys
+chown -R terraform:terraform /home/terraform/.ssh
+
+# Installer et configurer nginx
+apt-get install -y nginx
+systemctl start nginx
+systemctl enable nginx
+
+# Créer la page d'accueil
+echo '<h1>Hello from VPC!</h1>' > /var/www/html/index.html
+echo '<p>Serveur organisé avec user-data</p>' >> /var/www/html/index.html
+
+echo "Configuration terminée avec user-data"
+EOF
+
+  vars = {
+    ssh_public_key = file("${var.ssh_key_path}.pub")
+  }
+}
+
+# Instance EC2 avec user-data
+resource "aws_instance" "web_server" {
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.public.id
+  vpc_security_group_ids = [aws_security_group.web_ssh_access.id]
+  user_data              = data.template_file.user_data.rendered
+
+  tags = {
+    Name = "nginx-web-server-vpc"
+  }
+}
+
 # Outputs webserver
 output "instance_id" {
   value = aws_instance.web_server.id
@@ -96,6 +162,7 @@ output "web_url" {
   value = "http://${aws_instance.web_server.public_ip}"
 }
 ```
+
 
 ### Main simplifié
 
@@ -235,12 +302,16 @@ Dans `webserver.tf` :
 
 ```coffee
 resource "aws_instance" "web_server" {
+  ami           = data.aws_ami.ubuntu.id
   instance_type = var.instance_type
+  # ... reste identique
+}
+
+# Et dans le template user-data :
+data "template_file" "user_data" {
   # ...
-  
-  connection {
-    private_key = file(var.ssh_key_path)
-    # ... reste identique
+  vars = {
+    ssh_public_key = file("${var.ssh_key_path}.pub")
   }
 }
 ```

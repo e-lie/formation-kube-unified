@@ -70,6 +70,7 @@ Notre projet Terragrunt utilise cette organisation :
         └── terragrunt.hcl       # Config environnement prod
 ```
 
+
 ## Configuration commune : _common/terragrunt.hcl
 
 Ce fichier définit la configuration partagée entre tous les environnements :

@@ -28,7 +28,11 @@ Nous allons construire notre infrastructure bloc par bloc pour bien comprendre c
 
 ### Étape 1 : Création du VPC de base
 
-Partez du code de la partie 3 (copiez le dossier part3 vers part4 ou commitez les changements de part3 et créez une nouvelle branche). Ajoutez le bloc VPC au début de votre fichier `main.tf` :
+Partez du code de la partie 3 (copiez le dossier part3 vers part4 ou commitez les changements de part3 et créez une nouvelle branche). 
+
+**Important :** Dans cette partie, nous abandonnons l'approche AMI personnalisée + remote-exec de la partie 2 pour adopter une approche plus moderne avec user-data. Cela simplifie le déploiement et améliore la scalabilité.
+
+Ajoutez le bloc VPC au début de votre fichier `main.tf` :
 
 ```coffee
 # VPC
@@ -158,36 +162,89 @@ resource "aws_security_group" "web_ssh_access" {
 
 La seule différence avec la partie 3 est l'ajout de `vpc_id = aws_vpc.main.id` qui indique que ce Security Group appartient à notre VPC personnalisé et non au VPC par défaut d'AWS.
 
-### Modification de l'instance EC2
+### Configuration de l'AMI Ubuntu et user-data
 
-L'instance EC2 de la partie 3 doit être modifiée pour fonctionner dans notre VPC personnalisé. Modifiez le bloc d'instance existant en ajoutant le paramètre `subnet_id` :
+Au lieu d'utiliser l'AMI personnalisée de la partie 2, nous allons maintenant utiliser l'AMI Ubuntu standard et configurer l'instance via `user-data`. Ajoutez d'abord les data sources :
 
 ```coffee
-# Instance EC2 - modification de la partie 3
+# Data source pour l'AMI Ubuntu standard
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"] # Canonical
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+}
+
+# Template pour user-data
+data "template_file" "user_data" {
+  template = <<-EOF
+#!/bin/bash
+
+# Mettre à jour le système
+apt-get update
+
+# Créer l'utilisateur et configurer SSH
+if ! id "terraform" &>/dev/null; then
+  useradd -m -s /bin/bash terraform
+  usermod -aG sudo terraform
+  echo 'terraform ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+fi
+
+# Créer le répertoire .ssh
+mkdir -p /home/terraform/.ssh
+chmod 700 /home/terraform/.ssh
+
+# Ajouter la clé publique SSH (remplacez par votre clé publique)
+echo "${ssh_public_key}" > /home/terraform/.ssh/authorized_keys
+chmod 600 /home/terraform/.ssh/authorized_keys
+chown -R terraform:terraform /home/terraform/.ssh
+
+# Installer et configurer nginx
+apt-get install -y nginx
+systemctl start nginx
+systemctl enable nginx
+
+# Créer la page d'accueil
+echo '<h1>Hello from VPC!</h1>' > /var/www/html/index.html
+echo '<p>Serveur configuré avec user-data</p>' >> /var/www/html/index.html
+
+echo "Configuration terminée avec user-data"
+EOF
+
+  vars = {
+    ssh_public_key = file("~/.ssh/id_terraform.pub")
+  }
+}
+```
+
+**Pourquoi user-data plutôt que remote-exec ?**
+
+Le script `user-data` s'exécute automatiquement au premier démarrage de l'instance, avant même que Terraform essaie de s'y connecter. Cette approche :
+- **Élimine les dépendances** : Pas besoin d'AMI personnalisée ou de connexion SSH pendant le provisioning
+- **Améliore la fiabilité** : Le script s'exécute indépendamment de Terraform
+- **Simplifie la gestion** : Une seule source de vérité pour la configuration initiale
+- **Permet le scaling** : Plus facile à intégrer avec des Auto Scaling Groups
+
+### Instance EC2 avec user-data
+
+Maintenant, créez l'instance EC2 en utilisant l'AMI Ubuntu standard et le script user-data :
+
+```coffee
+# Instance EC2 avec user-data
 resource "aws_instance" "web_server" {
-  ami                    = data.aws_ami.custom_ubuntu.id
+  ami                    = data.aws_ami.ubuntu.id
   instance_type          = "t2.micro"
-  subnet_id              = aws_subnet.public.id  # <-- Ligne ajoutée pour placer l'instance dans notre subnet
+  subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web_ssh_access.id]
-
-  # Le reste reste identique à la partie 3
-  connection {
-    type        = "ssh"
-    user        = "root"
-    private_key = file("~/.ssh/id_terraform")
-    host        = self.public_ip
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "apt-get update",
-      "apt-get install -y nginx",
-      "systemctl start nginx",
-      "systemctl enable nginx",
-      "echo '<h1>Hello from VPC!</h1>' > /var/www/html/index.html",
-      "echo 'Nginx installed in VPC'"
-    ]
-  }
+  user_data              = data.template_file.user_data.rendered
 
   tags = {
     Name = "nginx-web-server-vpc"
@@ -195,7 +252,11 @@ resource "aws_instance" "web_server" {
 }
 ```
 
-La principale différence avec la partie 3 est l'ajout de `subnet_id = aws_subnet.public.id` qui place explicitement l'instance dans notre subnet public personnalisé au lieu du subnet par défaut d'AWS.
+**Changements importants :**
+- **AMI** : `data.aws_ami.ubuntu.id` au lieu de l'AMI personnalisée
+- **user_data** : Le script de configuration s'exécute automatiquement
+- **Pas de provisioner** : Plus besoin de `connection` et `remote-exec`
+- **Utilisateur** : Le script crée un utilisateur `terraform` avec votre clé SSH
 
 ### Outputs
 
@@ -268,3 +329,15 @@ terraform apply tfplan
 ```
 
 Une fois le déploiement terminé, vous pouvez accéder au serveur web via l'URL affichée dans les outputs. La page affichera "Hello from VPC!" confirmant que le serveur fonctionne dans votre VPC personnalisé.
+
+**Connexion SSH :** Pour vous connecter au serveur, utilisez maintenant l'utilisateur `terraform` créé par le script user-data :
+
+```bash
+ssh -i ~/.ssh/id_terraform terraform@<IP_PUBLIQUE>
+```
+
+Le script user-data prend quelques minutes pour s'exécuter complètement. Vous pouvez vérifier son exécution via les logs système une fois connecté :
+
+```bash
+sudo tail -f /var/log/cloud-init-output.log
+```
