@@ -28,26 +28,35 @@ variable "overlay_interface" {
   default = "cilium_vxlan"
 }
 
-/* hcloud */
-variable "hcloud_token" {
-  default = ""
+/* scaleway */
+variable "scaleway_profile" {
+  description = "Profil Scaleway CLI à utiliser"
+  type        = string
+  default     = "default"
 }
 
-variable "hcloud_ssh_keys" {
-  type    = list(string)
-  default = [""]
+variable "scaleway_ssh_keys" {
+  description = "Liste des noms des clés SSH Scaleway"
+  type        = list(string)
+  default     = []
 }
 
-variable "hcloud_location" {
-  default = "nbg1"
+variable "scaleway_zone" {
+  description = "Zone Scaleway"
+  type        = string
+  default     = "fr-par-1"
 }
 
-variable "hcloud_type" {
-  default = "cx11"
+variable "scaleway_type" {
+  description = "Type d'instance Scaleway"
+  type        = string
+  default     = "DEV1-M"
 }
 
-variable "hcloud_image" {
-  default = "ubuntu-24.04"
+variable "scaleway_image" {
+  description = "Image de base Scaleway"
+  type        = string
+  default     = "ubuntu_jammy"
 }
 
 /* digitalocean for DNS*/

@@ -1,3 +1,14 @@
+# ================================================================
+# MODULE NGINX - Application de démonstration Kubernetes
+# ================================================================
+# Ce module déploie une application nginx sur le cluster Kubernetes
+# Il configure plusieurs déploiements avec différentes configurations
+# pour démontrer les concepts Kubernetes (services, configmaps, etc.)
+
+# ================================================================
+# PROVIDERS REQUIS
+# ================================================================
+
 terraform {
   required_providers {
     kubernetes = {
@@ -11,7 +22,10 @@ terraform {
   }
 }
 
-# Variables d'entrée
+# ================================================================
+# VARIABLES D'ENTRÉE
+# ================================================================
+
 variable "master_ip" {
   description = "IP du nœud master Kubernetes"
   type        = string
@@ -23,18 +37,23 @@ variable "cluster_name" {
 }
 
 variable "namespace" {
-  description = "Kubernetes namespace for nginx deployment"
+  description = "Namespace Kubernetes pour le déploiement nginx"
   type        = string
   default     = "default"
 }
 
 variable "replicas" {
-  description = "Number of nginx replicas"
+  description = "Nombre de répliques nginx"
   type        = number
   default     = 3
 }
 
-# Récupération du kubeconfig depuis le master
+# ================================================================
+# RÉCUPÉRATION DE LA CONFIGURATION KUBERNETES
+# ================================================================
+# Télécharge le kubeconfig depuis le master pour permettre 
+# au provider Kubernetes de se connecter au cluster
+
 resource "null_resource" "get_kubeconfig" {
   provisioner "local-exec" {
     command = <<EOT
@@ -45,13 +64,21 @@ resource "null_resource" "get_kubeconfig" {
   }
 }
 
-# Configuration du provider Kubernetes
+# ================================================================
+# CONFIGURATION DU PROVIDER KUBERNETES
+# ================================================================
+# Utilise le kubeconfig téléchargé pour se connecter au cluster
+
 provider "kubernetes" {
   config_path = "~/.kube/config-${var.cluster_name}"
   depends_on  = [null_resource.get_kubeconfig]
 }
 
-# Namespace dédié (optionnel)
+# ================================================================
+# CRÉATION DU NAMESPACE (SI NÉCESSAIRE)
+# ================================================================
+# Crée un namespace dédié si différent de "default"
+
 resource "kubernetes_namespace" "nginx_namespace" {
   count = var.namespace != "default" ? 1 : 0
   
@@ -64,7 +91,11 @@ resource "kubernetes_namespace" "nginx_namespace" {
   }
 }
 
-# Déploiement nginx
+# ================================================================
+# DÉPLOIEMENT NGINX STANDARD
+# ================================================================
+# Déploie nginx avec configuration de base pour démonstration
+
 resource "kubernetes_deployment" "nginx" {
   metadata {
     name      = "nginx-deployment"
@@ -94,7 +125,7 @@ resource "kubernetes_deployment" "nginx" {
 
       spec {
         container {
-          image = "nginx:alpine"
+          image = "nginx:alpine"  # Image légère Alpine Linux
           name  = "nginx"
 
           port {
@@ -102,17 +133,19 @@ resource "kubernetes_deployment" "nginx" {
             name          = "http"
           }
 
+          # Limites et demandes de ressources pour une gestion optimale
           resources {
             limits = {
-              cpu    = var.cpu_limit
-              memory = var.memory_limit
+              cpu    = var.cpu_limit      # Limite max CPU
+              memory = var.memory_limit   # Limite max mémoire
             }
             requests = {
-              cpu    = var.cpu_request
-              memory = var.memory_request
+              cpu    = var.cpu_request    # Demande min CPU
+              memory = var.memory_request # Demande min mémoire
             }
           }
 
+          # Sonde de santé - redémarre le pod si nginx ne répond plus
           liveness_probe {
             http_get {
               path = "/"
@@ -122,6 +155,7 @@ resource "kubernetes_deployment" "nginx" {
             period_seconds        = 10
           }
 
+          # Sonde de disponibilité - retire du load balancer si pas prêt
           readiness_probe {
             http_get {
               path = "/"
@@ -131,7 +165,7 @@ resource "kubernetes_deployment" "nginx" {
             period_seconds        = 5
           }
 
-          # Variables d'environnement
+          # Variables d'environnement pour la configuration nginx
           env {
             name  = "NGINX_HOST"
             value = "localhost"
@@ -147,7 +181,11 @@ resource "kubernetes_deployment" "nginx" {
   }
 }
 
-# Service pour exposer nginx
+# ================================================================
+# SERVICE CLUSTERIP POUR NGINX
+# ================================================================
+# Expose nginx en interne dans le cluster sur le port 80
+
 resource "kubernetes_service" "nginx" {
   metadata {
     name      = "nginx-service"
@@ -173,7 +211,12 @@ resource "kubernetes_service" "nginx" {
   }
 }
 
-# Service LoadBalancer (si supporté par le cloud provider)
+# ================================================================
+# SERVICE LOADBALANCER POUR NGINX
+# ================================================================
+# Expose nginx vers l'extérieur via un LoadBalancer
+# (si supporté par le cloud provider)
+
 resource "kubernetes_service" "nginx_lb" {
   metadata {
     name      = "nginx-loadbalancer"
@@ -202,7 +245,11 @@ resource "kubernetes_service" "nginx_lb" {
   }
 }
 
-# ConfigMap pour une page d'accueil personnalisée
+# ================================================================
+# CONFIGMAP POUR CONTENU PERSONNALISÉ
+# ================================================================
+# Crée une page d'accueil personnalisée avec les infos du cluster
+
 resource "kubernetes_config_map" "nginx_config" {
   metadata {
     name      = "nginx-html-config"
@@ -218,7 +265,11 @@ resource "kubernetes_config_map" "nginx_config" {
   }
 }
 
-# Déploiement avec page personnalisée
+# ================================================================
+# DÉPLOIEMENT NGINX AVEC CONTENU PERSONNALISÉ
+# ================================================================
+# Déploie nginx avec une page d'accueil personnalisée via ConfigMap
+
 resource "kubernetes_deployment" "nginx_custom" {
   metadata {
     name      = "nginx-custom"
@@ -254,6 +305,7 @@ resource "kubernetes_deployment" "nginx_custom" {
             container_port = 80
           }
 
+          # Monte le ConfigMap comme volume pour remplacer le contenu par défaut
           volume_mount {
             name       = "html-content"
             mount_path = "/usr/share/nginx/html"
@@ -272,6 +324,7 @@ resource "kubernetes_deployment" "nginx_custom" {
           }
         }
 
+        # Volume basé sur le ConfigMap contenant la page personnalisée
         volume {
           name = "html-content"
           config_map {
@@ -283,7 +336,11 @@ resource "kubernetes_deployment" "nginx_custom" {
   }
 }
 
-# Service pour le déploiement custom
+# ================================================================
+# SERVICE POUR LE DÉPLOIEMENT PERSONNALISÉ
+# ================================================================
+# Expose le nginx personnalisé sur le port 8080
+
 resource "kubernetes_service" "nginx_custom" {
   metadata {
     name      = "nginx-custom-service"

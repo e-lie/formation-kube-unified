@@ -1,12 +1,18 @@
 module "provider" {
-  source = "./modules/hcloud"
-  token           = var.hcloud_token
-  ssh_keys        = var.hcloud_ssh_keys
-  location        = var.hcloud_location
-  type            = var.hcloud_type
-  image           = var.hcloud_image
+  source = "./modules/scaleway"
+  
+  # Configuration Scaleway (utilise le profil CLI)
+  profile         = var.scaleway_profile
+  zone           = var.scaleway_zone
+  type           = var.scaleway_type
+  image          = var.scaleway_image
+  
+  # Configuration des serveurs
   hosts           = var.node_count
   hostname_format = var.hostname_format
+  ssh_keys        = var.scaleway_ssh_keys
+  
+  # Paquets supplémentaires pour Kubernetes
   apt_packages = ["ceph-common", "nfs-common", "open-iscsi"]
 }
 
