@@ -1,10 +1,8 @@
 ---
-title: "Introduction"
-description: "Guide Introduction"
-sidebar:
-  order: 100
+title: Introduction
+draft: false
+sidebar_position: 1
 ---
-
 
 ## Bonjour à tous ! 
 
@@ -26,7 +24,7 @@ sidebar:
 
 ## Trois transformations profondes de l'informatique
 
-![](/100_cours_intro/images/k8s_logo.png)
+![](images/k8s_logo.png)
 
 
 Kubernetes se trouve au coeur de plusieurs transformations profondes techniques, humaines et économiques de l'informatique:
