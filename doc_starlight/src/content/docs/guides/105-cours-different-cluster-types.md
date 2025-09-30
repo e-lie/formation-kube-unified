@@ -2,7 +2,7 @@
 title: "Cours - Les différents types de clusters"
 description: "Guide Cours - Les différents types de clusters"
 sidebar:
-  order: 80
+  order: 105
 ---
 
 
@@ -16,7 +16,7 @@ sidebar:
 
 Kubernetes a une architecture master/worker ce qui signifie que certains certains noeuds du cluster contrôlent l'exécution par les autres noeuds de logiciels ou jobs.
 
-![](/080_cours_different_cluster_types/images/k8s-archi.jpg)
+![](/105_cours_different_cluster_types/images/k8s-archi.jpg)
 
 #### Les noeuds Kubernetes
 

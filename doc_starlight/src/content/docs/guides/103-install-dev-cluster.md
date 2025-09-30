@@ -2,7 +2,7 @@
 title: "TP - installer un cluster de dev"
 description: "Guide TP - installer un cluster de dev"
 sidebar:
-  order: 120
+  order: 103
 ---
 
 

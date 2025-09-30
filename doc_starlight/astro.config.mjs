@@ -4,7 +4,7 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://support-terraform.eliegavoty.fr',
+	site: 'https://support-kube.eliegavoty.fr',
 	// base: '/', // Pas de base path avec un domaine custom
 	integrations: [
 		starlight({
