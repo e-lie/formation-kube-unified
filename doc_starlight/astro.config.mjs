@@ -23,8 +23,24 @@ export default defineConfig({
 					autogenerate: { directory: 'helm' },
 				},
 				{
-					label: 'Istio & Service Mesh',
-					autogenerate: { directory: 'istio' },
+					label: 'GitOps & ArgoCD',
+					autogenerate: { directory: 'gitops-argocd' },
+				},
+				{
+					label: 'Clusters On-Premise',
+					autogenerate: { directory: 'clusters-onpremise' },
+				},
+				{
+					label: 'Statefulness & Storage',
+					autogenerate: { directory: 'statefulness-storage' },
+				},
+				{
+					label: 'Microservices & Istio',
+					autogenerate: { directory: 'microservices-istio' },
+				},
+				{
+					label: 'Modules Bonus',
+					autogenerate: { directory: 'bonus' },
 				},
 			],
 			customCss: [

@@ -31,9 +31,29 @@ const SECTIONS = [
     label: 'Helm'
   },
   { 
-    name: 'section_istio',
-    targetDir: 'istio',
-    label: 'Istio & Service Mesh'
+    name: 'section_gitops_argocd',
+    targetDir: 'gitops-argocd',
+    label: 'GitOps & ArgoCD'
+  },
+  { 
+    name: 'section_clusters_onpremise',
+    targetDir: 'clusters-onpremise',
+    label: 'Clusters On-Premise'
+  },
+  { 
+    name: 'section_statefulness_storage',
+    targetDir: 'statefulness-storage',
+    label: 'Statefulness & Storage'
+  },
+  { 
+    name: 'section_microservices_istio',
+    targetDir: 'microservices-istio',
+    label: 'Microservices & Istio'
+  },
+  { 
+    name: 'section_bonus',
+    targetDir: 'bonus',
+    label: 'Modules Bonus'
   }
 ];
 
