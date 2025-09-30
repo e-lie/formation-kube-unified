@@ -8,14 +8,14 @@ export default defineConfig({
 	// base: '/', // Pas de base path avec un domaine custom
 	integrations: [
 		starlight({
-			title: 'Formation Terraform',
+			title: 'Formation Kubernetes',
 			description: 'Guide complet pour apprendre Terraform avec AWS',
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/e-lie/formation-terraform-unified' }
 			],
 			sidebar: [
 				{
-					label: 'Formation Terraform',
+					label: 'Formation Kubernetes',
 					autogenerate: { directory: 'guides' },
 				},
 			],

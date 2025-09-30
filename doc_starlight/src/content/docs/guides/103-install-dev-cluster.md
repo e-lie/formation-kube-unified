@@ -12,7 +12,7 @@ Voir le cours "différents types de cluster"
 
 - `minikube` est une distribution spécialisée pour le dev => avantage : la distribution la plus connue, bien documentée et utilisée dans tous les tutoriels
 - `k3s` est une distribution simple a installer pour le dev ou la prod en particulier pour des contextes edge computing. => avantage : permet de faire de la prod / s'installe sur un serveur.
-- `k3d` une distribution de dev basée sur k3s et Docker => avantage : démarre très vite, pleins de fonctionnalités pratiques comme le multinoeud.
+- `kind` (Kubernetes IN Docker) une distribution de dev basée sur Docker => avantage : léger, rapide à démarrer, supporte le multinoeud, idéal pour les tests CI/CD.
 
 Nous allons installer l'une ici.
 
@@ -29,6 +29,128 @@ Minikube configure automatiquement kubectl (dans le fichier `~/.kube/config`) po
 - Testez la connexion avec `kubectl get nodes`.
 
 Affichez à nouveau la version `kubectl version`. Cette fois-ci la version de kubernetes qui tourne sur le cluster actif est également affichée. Idéalement le client et le cluster devrait être dans la même version mineure par exemple `1.20.x`.
+
+## Installer kind (facultatif)
+
+kind (Kubernetes IN Docker) est un outil pour exécuter des clusters Kubernetes locaux en utilisant des conteneurs Docker comme noeuds. Il est particulièrement adapté pour les tests et le développement local.
+
+### Installation de kind
+
+- Pour installer kind sur Linux:
+  ```bash
+  curl -Lo ./kind https://kind.sigs.k8s.io/dl/v0.20.0/kind-linux-amd64
+  chmod +x ./kind
+  sudo mv ./kind /usr/local/bin/kind
+  ```
+
+- Pour d'autres systèmes d'exploitation, voir: https://kind.sigs.k8s.io/docs/user/quick-start/#installation
+
+### Créer un cluster kind multi-nœuds
+
+Pour créer un cluster avec 1 control-plane (master) et 3 workers, nous allons utiliser un fichier de configuration kind.
+
+- Créez un fichier `kind-config.yaml`:
+  ```yaml
+  kind: Cluster
+  apiVersion: kind.x-k8s.io/v1alpha4
+  nodes:
+  - role: control-plane
+    kubeadmConfigPatches:
+    - |
+      kind: InitConfiguration
+      nodeRegistration:
+        kubeletExtraArgs:
+          node-labels: "ingress-ready=true"
+    extraPortMappings:
+    - containerPort: 80
+      hostPort: 80
+      protocol: TCP
+    - containerPort: 443
+      hostPort: 443
+      protocol: TCP
+  - role: worker
+  - role: worker
+  - role: worker
+  ```
+
+- Créez le cluster avec cette configuration:
+  ```bash
+  kind create cluster --name mon-cluster --config kind-config.yaml
+  ```
+
+- kind configure automatiquement kubectl pour se connecter au cluster créé.
+
+- Testez la connexion et vérifiez les 4 nœuds:
+  ```bash
+  kubectl get nodes
+  ```
+
+Vous devriez voir 1 control-plane et 3 workers.
+
+### Installer Ingress NGINX
+
+Pour exposer des services via HTTP/HTTPS, nous devons installer un Ingress Controller. NGINX Ingress est une solution populaire.
+
+- Installez NGINX Ingress Controller spécifiquement configuré pour kind:
+  ```bash
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+  ```
+
+- Attendez que le controller soit prêt:
+  ```bash
+  kubectl wait --namespace ingress-nginx \
+    --for=condition=ready pod \
+    --selector=app.kubernetes.io/component=controller \
+    --timeout=90s
+  ```
+
+- Vérifiez que l'ingress controller fonctionne:
+  ```bash
+  kubectl get pods -n ingress-nginx
+  ```
+
+### Configuration du LoadBalancer avec Cloud Provider KIND
+
+kind ne fournit pas de LoadBalancer par défaut. Pour émuler un LoadBalancer en local, nous utilisons Cloud Provider KIND, une solution officielle intégrée à kind.
+
+- Installez Cloud Provider KIND:
+  ```bash
+  go install sigs.k8s.io/cloud-provider-kind@latest
+  ```
+
+  Si vous n'avez pas Go installé, vous pouvez télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
+
+- Démarrez Cloud Provider KIND en arrière-plan (dans un terminal séparé ou en tant que service):
+  ```bash
+  sudo cloud-provider-kind
+  ```
+
+  Note: Le processus doit rester actif pour que les LoadBalancers fonctionnent.
+
+- Testez le LoadBalancer en créant un service de type LoadBalancer:
+  ```bash
+  kubectl create deployment nginx --image=nginx
+  kubectl expose deployment nginx --port=80 --type=LoadBalancer
+  ```
+
+- Vérifiez que le service obtient une IP externe:
+  ```bash
+  kubectl get svc nginx
+  ```
+
+Vous devriez voir une IP externe assignée automatiquement. Cloud Provider KIND crée un nouveau conteneur Docker qui agit comme LoadBalancer pour chaque service de type LoadBalancer.
+
+- Testez l'accès au service:
+  ```bash
+  LB_IP=$(kubectl get svc/nginx -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
+  curl http://$LB_IP
+  ```
+
+### Gérer les clusters kind
+
+- Lister les clusters: `kind get clusters`
+- Supprimer un cluster: `kind delete cluster --name mon-cluster`
+- Le contexte kubectl sera automatiquement mis à jour avec le format `kind-<nom-du-cluster>`
 
 ## Installer k3s (facultatif)
 
