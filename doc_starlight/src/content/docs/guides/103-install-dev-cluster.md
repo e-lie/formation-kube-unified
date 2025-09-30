@@ -12,7 +12,7 @@ Voir le cours "différents types de cluster"
 
 - `minikube` est une distribution spécialisée pour le dev => avantage : la distribution la plus connue, bien documentée et utilisée dans tous les tutoriels
 - `k3s` est une distribution simple a installer pour le dev ou la prod en particulier pour des contextes edge computing. => avantage : permet de faire de la prod / s'installe sur un serveur.
-- `kind` (Kubernetes IN Docker) une distribution de dev basée sur Docker avantage : léger, rapide à démarrer, supporte le multinoeud, utilise kubeadm en arrière plan -> un cluster kube très standard / vanilla mais proche de la prod. Permet de tester la plupart des solutions y compris des plugins CNI (réseau) et stockage
+- `kind` (Kubernetes IN Docker) une distribution basée sur Docker. avantages : léger, rapide à démarrer, supporte le multinoeud, utilise kubeadm en arrière plan. Kind un cluster kube très standard / vanilla mais proche de la prod (multinoeud, lb). Permet de tester la plupart des solutions y compris des plugins CNI (réseau) et CSI (stockage).
 
 Nous allons installer l'une ici.
 
@@ -123,13 +123,7 @@ kubectl get pods -n ingress-nginx
 
 kind ne fournit pas de LoadBalancer par défaut. Pour émuler un LoadBalancer en local, nous utilisons Cloud Provider KIND, une solution officielle intégrée à kind.
 
-- Installez Cloud Provider KIND:
-
-```bash
-go install sigs.k8s.io/cloud-provider-kind@latest
-```
-
-  Si vous n'avez pas Go installé, vous pouvez télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
+- Installez Cloud Provider KIND: télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
 
 - Démarrez Cloud Provider KIND en arrière-plan (dans un terminal séparé ou en tant que service):
 
@@ -149,6 +143,11 @@ sudo cloud-provider-kind
 
 ## Installer k3s (facultatif)
 
+
+<details>
+
+<summary>Installer et configurer kind</summary>
+
 K3s est une distribution de Kubernetes orientée vers la création de petits clusters de production notamment pour l'informatique embarquée et l'Edge computing. Elle a la caractéristique de rassembler les différents composants d'un cluster kubernetes en un seul "binaire" pouvant s'exécuter en mode `master` (noeud du control plane) ou `agent` (noeud de calcul).
 
 Avec K3s, il est possible d'installer un petit cluster d'un seul noeud en une commande ce que nous allons faire ici:
@@ -164,7 +163,8 @@ Avec K3s, il est possible d'installer un petit cluster d'un seul noeud en une co
  <!-- - activer cette configuration pour kubectl avec une variable d'environnement: `export KUBECONFIG=~/.kube/k3s.yaml` -->
  - Tester la configuration avec `kubectl get nodes` qui devrait renvoyer quelque chose proche de:
 
- ```
+
+```bash
 NAME                 STATUS   ROLES                  AGE   VERSION
 vnc-stagiaire-...   Ready    control-plane,master   10m   v1.21.7+k3s1
 ```
@@ -179,6 +179,8 @@ source ~/.bashrc
 - On peut ensuite visualiser les deux contextes de connexion avec `kubectl config get-contexts` et selectionner l'un d'eux avec `kubectl config use-context default`.
 
 - `kubectl get nodes` ou `kubectl cluster-info` permet de vérifier le résultat.
+
+</details>
 
 ### Ajouter les connexions à Lens
 

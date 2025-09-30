@@ -120,13 +120,7 @@ kubectl get pods -n ingress-nginx
 
 kind ne fournit pas de LoadBalancer par défaut. Pour émuler un LoadBalancer en local, nous utilisons Cloud Provider KIND, une solution officielle intégrée à kind.
 
-- Installez Cloud Provider KIND:
-
-```bash
-go install sigs.k8s.io/cloud-provider-kind@latest
-```
-
-  Si vous n'avez pas Go installé, vous pouvez télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
+- Installez Cloud Provider KIND: télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
 
 - Démarrez Cloud Provider KIND en arrière-plan (dans un terminal séparé ou en tant que service):
 
@@ -166,7 +160,8 @@ Avec K3s, il est possible d'installer un petit cluster d'un seul noeud en une co
  <!-- - activer cette configuration pour kubectl avec une variable d'environnement: `export KUBECONFIG=~/.kube/k3s.yaml` -->
  - Tester la configuration avec `kubectl get nodes` qui devrait renvoyer quelque chose proche de:
 
- ```
+
+```bash
 NAME                 STATUS   ROLES                  AGE   VERSION
 vnc-stagiaire-...   Ready    control-plane,master   10m   v1.21.7+k3s1
 ```
