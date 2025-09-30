@@ -6,5 +6,5 @@ build:
 deploy:
   kustomize:
     paths:
-      - k8s-deploy/prod
-      - k8s-deploy/dev
+      - k8s/prod
+      - k8s/dev

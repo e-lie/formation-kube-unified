@@ -60,19 +60,6 @@ kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
 nodes:
 - role: control-plane
-  kubeadmConfigPatches:
-  - |
-    kind: InitConfiguration
-    nodeRegistration:
-      kubeletExtraArgs:
-        node-labels: "ingress-ready=true"
-  extraPortMappings:
-  - containerPort: 80
-    hostPort: 80
-    protocol: TCP
-  - containerPort: 443
-    hostPort: 443
-    protocol: TCP
 - role: worker
 - role: worker
 - role: worker
@@ -94,15 +81,36 @@ kubectl get nodes
 
 Vous devriez voir 1 control-plane et 3 workers.
 
-### Installer Ingress NGINX pour kind
+### Configuration du LoadBalancer avec Cloud Provider KIND
+
+kind ne fournit pas de LoadBalancer par défaut. Pour émuler un LoadBalancer en local, nous utilisons Cloud Provider KIND, une solution officielle intégrée à kind.
+
+- Installez Cloud Provider KIND: télécharger puis décompresser le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
+
+```bash
+chmod +x cloud-provider-kind
+sudo cp cloud-provider-kind /usr/local/bin
+```
+
+- Démarrez Cloud Provider KIND en arrière-plan (dans un terminal séparé ou en tant que service):
+
+```bash
+sudo cloud-provider-kind
+```
+
+  Note: Le processus doit rester actif pour que les LoadBalancers fonctionnent.
+
+### Installer Ingress NGINX
 
 Pour exposer des services via HTTP/HTTPS, nous devons installer un Ingress Controller. NGINX Ingress est une solution populaire.
 
 - Installez NGINX Ingress Controller spécifiquement configuré pour kind:
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kubectl apply -f https://kind.sigs.k8s.io/examples/ingress/deploy-ingress-nginx.yaml
 ```
+
+Note: Le fichier d'installation kind crée automatiquement les bons nodeSelectors et tolérances pour fonctionner avec la configuration multi-nœuds.
 
 - Attendez que le controller soit prêt:
 
@@ -118,20 +126,6 @@ kubectl wait --namespace ingress-nginx \
 ```bash
 kubectl get pods -n ingress-nginx
 ```
-
-### Configuration du LoadBalancer avec Cloud Provider KIND
-
-kind ne fournit pas de LoadBalancer par défaut. Pour émuler un LoadBalancer en local, nous utilisons Cloud Provider KIND, une solution officielle intégrée à kind.
-
-- Installez Cloud Provider KIND: télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
-
-- Démarrez Cloud Provider KIND en arrière-plan (dans un terminal séparé ou en tant que service):
-
-```bash
-sudo cloud-provider-kind
-```
-
-  Note: Le processus doit rester actif pour que les LoadBalancers fonctionnent.
 
 ### Gérer les clusters kind
 

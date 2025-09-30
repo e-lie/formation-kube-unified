@@ -32,7 +32,7 @@ Imaginez que vous développiez une application microservice avec un dépot de co
 
 ### Déploiement du `frontend` via minikube
 
-Ajoutez au fichier `frontend.yml` du dossier `k8s-deploy` le code suivant:
+Ajoutez au fichier `frontend.yml` du dossier `k8s` le code suivant:
 
 ```yaml
 apiVersion: apps/v1
@@ -80,13 +80,13 @@ build:
 deploy:
   kubectl:
     manifests:
-      - k8s-deploy-dev/*.yaml
+      - k8s/*.yaml
 ```
 
 - Identifiez-vous sur le registry avec `docker login <registry>`.
 
 
-- Changez dans le fichier `frontend.yml` du dossier `k8s-deploy` le paramètre image comme suit:
+- Changez dans le fichier `frontend.yml` du dossier `k8s` le paramètre image comme suit:
 
 ```yaml
 ...
