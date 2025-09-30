@@ -32,6 +32,10 @@ Affichez à nouveau la version `kubectl version`. Cette fois-ci la version de ku
 
 ## Installer kind (facultatif)
 
+<details>
+
+<summary>Installer et configurer kind</summary>
+
 kind (Kubernetes IN Docker) est un outil pour exécuter des clusters Kubernetes locaux en utilisant des conteneurs Docker comme noeuds. Il est particulièrement adapté pour les tests et le développement local.
 
 ### Installation de kind
@@ -50,93 +54,103 @@ kind (Kubernetes IN Docker) est un outil pour exécuter des clusters Kubernetes 
 Pour créer un cluster avec 1 control-plane (master) et 3 workers, nous allons utiliser un fichier de configuration kind.
 
 - Créez un fichier `kind-config.yaml`:
-  ```yaml
-  kind: Cluster
-  apiVersion: kind.x-k8s.io/v1alpha4
-  nodes:
-  - role: control-plane
-    kubeadmConfigPatches:
-    - |
-      kind: InitConfiguration
-      nodeRegistration:
-        kubeletExtraArgs:
-          node-labels: "ingress-ready=true"
-    extraPortMappings:
-    - containerPort: 80
-      hostPort: 80
-      protocol: TCP
-    - containerPort: 443
-      hostPort: 443
-      protocol: TCP
-  - role: worker
-  - role: worker
-  - role: worker
-  ```
+
+```yaml
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+- role: worker
+- role: worker
+- role: worker
+```
 
 - Créez le cluster avec cette configuration:
-  ```bash
-  kind create cluster --name mon-cluster --config kind-config.yaml
-  ```
+
+```bash
+kind create cluster --name mon-cluster --config kind-config.yaml
+```
 
 - kind configure automatiquement kubectl pour se connecter au cluster créé.
 
 - Testez la connexion et vérifiez les 4 nœuds:
-  ```bash
-  kubectl get nodes
-  ```
+
+```bash
+kubectl get nodes
+```
 
 Vous devriez voir 1 control-plane et 3 workers.
 
-### Installer Ingress NGINX
+### Installer Ingress NGINX pour kind
 
 Pour exposer des services via HTTP/HTTPS, nous devons installer un Ingress Controller. NGINX Ingress est une solution populaire.
 
 - Installez NGINX Ingress Controller spécifiquement configuré pour kind:
-  ```bash
-  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-  ```
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+```
 
 - Attendez que le controller soit prêt:
-  ```bash
-  kubectl wait --namespace ingress-nginx \
-    --for=condition=ready pod \
-    --selector=app.kubernetes.io/component=controller \
-    --timeout=90s
-  ```
+
+```bash
+kubectl wait --namespace ingress-nginx \
+  --for=condition=ready pod \
+  --selector=app.kubernetes.io/component=controller \
+  --timeout=90s
+```
 
 - Vérifiez que l'ingress controller fonctionne:
-  ```bash
-  kubectl get pods -n ingress-nginx
-  ```
+
+```bash
+kubectl get pods -n ingress-nginx
+```
 
 ### Configuration du LoadBalancer avec Cloud Provider KIND
 
 kind ne fournit pas de LoadBalancer par défaut. Pour émuler un LoadBalancer en local, nous utilisons Cloud Provider KIND, une solution officielle intégrée à kind.
 
 - Installez Cloud Provider KIND:
-  ```bash
-  go install sigs.k8s.io/cloud-provider-kind@latest
-  ```
+
+```bash
+go install sigs.k8s.io/cloud-provider-kind@latest
+```
 
   Si vous n'avez pas Go installé, vous pouvez télécharger le binaire depuis les releases: https://github.com/kubernetes-sigs/cloud-provider-kind/releases
 
 - Démarrez Cloud Provider KIND en arrière-plan (dans un terminal séparé ou en tant que service):
-  ```bash
-  sudo cloud-provider-kind
-  ```
+
+```bash
+sudo cloud-provider-kind
+```
 
   Note: Le processus doit rester actif pour que les LoadBalancers fonctionnent.
 
 - Testez le LoadBalancer en créant un service de type LoadBalancer:
-  ```bash
-  kubectl create deployment nginx --image=nginx
-  kubectl expose deployment nginx --port=80 --type=LoadBalancer
-  ```
+
+```bash
+kubectl create deployment nginx --image=nginx
+kubectl expose deployment nginx --port=80 --type=LoadBalancer
+```
 
 - Vérifiez que le service obtient une IP externe:
-  ```bash
-  kubectl get svc nginx
-  ```
+
+```bash
+kubectl get svc nginx
+```
 
 Vous devriez voir une IP externe assignée automatiquement. Cloud Provider KIND crée un nouveau conteneur Docker qui agit comme LoadBalancer pour chaque service de type LoadBalancer.
 
@@ -151,6 +165,8 @@ Vous devriez voir une IP externe assignée automatiquement. Cloud Provider KIND 
 - Lister les clusters: `kind get clusters`
 - Supprimer un cluster: `kind delete cluster --name mon-cluster`
 - Le contexte kubectl sera automatiquement mis à jour avec le format `kind-<nom-du-cluster>`
+
+</details>
 
 ## Installer k3s (facultatif)
 
