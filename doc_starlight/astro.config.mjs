@@ -15,12 +15,12 @@ export default defineConfig({
 			],
 			sidebar: [
 				{
-					label: 'Kubernetes Principal',
+					label: 'Cours principal',
 					autogenerate: { directory: 'kubernetes-principal' },
 				},
 				{
-					label: 'Helm',
-					autogenerate: { directory: 'helm' },
+					label: 'Aspects avancés',
+					autogenerate: { directory: 'bonus' },
 				},
 				{
 					label: 'GitOps & ArgoCD',
@@ -30,17 +30,13 @@ export default defineConfig({
 					label: 'Clusters On-Premise',
 					autogenerate: { directory: 'clusters-onpremise' },
 				},
-				{
-					label: 'Statefulness & Storage',
-					autogenerate: { directory: 'statefulness-storage' },
-				},
+				// {
+				// 	label: 'Statefulness & Storage',
+				// 	autogenerate: { directory: 'statefulness-storage' },
+				// },
 				{
 					label: 'Microservices & Istio',
 					autogenerate: { directory: 'microservices-istio' },
-				},
-				{
-					label: 'Modules Bonus',
-					autogenerate: { directory: 'bonus' },
 				},
 			],
 			customCss: [

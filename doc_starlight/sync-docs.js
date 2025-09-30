@@ -26,11 +26,6 @@ const SECTIONS = [
     label: 'Kubernetes Principal'
   },
   { 
-    name: 'section_helm',
-    targetDir: 'helm',
-    label: 'Helm'
-  },
-  { 
     name: 'section_gitops_argocd',
     targetDir: 'gitops-argocd',
     label: 'GitOps & ArgoCD'
