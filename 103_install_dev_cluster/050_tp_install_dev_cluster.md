@@ -9,7 +9,7 @@ Voir le cours "différents types de cluster"
 
 - `minikube` est une distribution spécialisée pour le dev => avantage : la distribution la plus connue, bien documentée et utilisée dans tous les tutoriels
 - `k3s` est une distribution simple a installer pour le dev ou la prod en particulier pour des contextes edge computing. => avantage : permet de faire de la prod / s'installe sur un serveur.
-- `kind` (Kubernetes IN Docker) une distribution de dev basée sur Docker => avantage : léger, rapide à démarrer, supporte le multinoeud, idéal pour les tests CI/CD.
+- `kind` (Kubernetes IN Docker) une distribution basée sur Docker. avantages : léger, rapide à démarrer, supporte le multinoeud, utilise kubeadm en arrière plan. Kind un cluster kube très standard / vanilla mais proche de la prod (multinoeud, lb). Permet de tester la plupart des solutions y compris des plugins CNI (réseau) et CSI (stockage).
 
 Nous allons installer l'une ici.
 
@@ -33,7 +33,7 @@ Affichez à nouveau la version `kubectl version`. Cette fois-ci la version de ku
 
 <summary>Installer et configurer kind</summary>
 
-kind (Kubernetes IN Docker) est un outil pour exécuter des clusters Kubernetes locaux en utilisant des conteneurs Docker comme noeuds. Il est particulièrement adapté pour les tests et le développement local.
+
 
 ### Installation de kind
 
@@ -136,27 +136,6 @@ sudo cloud-provider-kind
 
   Note: Le processus doit rester actif pour que les LoadBalancers fonctionnent.
 
-- Testez le LoadBalancer en créant un service de type LoadBalancer:
-
-```bash
-kubectl create deployment nginx --image=nginx
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
-```
-
-- Vérifiez que le service obtient une IP externe:
-
-```bash
-kubectl get svc nginx
-```
-
-Vous devriez voir une IP externe assignée automatiquement. Cloud Provider KIND crée un nouveau conteneur Docker qui agit comme LoadBalancer pour chaque service de type LoadBalancer.
-
-- Testez l'accès au service:
-  ```bash
-  LB_IP=$(kubectl get svc/nginx -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  curl http://$LB_IP
-  ```
-
 ### Gérer les clusters kind
 
 - Lister les clusters: `kind get clusters`
@@ -166,6 +145,11 @@ Vous devriez voir une IP externe assignée automatiquement. Cloud Provider KIND 
 </details>
 
 ## Installer k3s (facultatif)
+
+
+<details>
+
+<summary>Installer et configurer kind</summary>
 
 K3s est une distribution de Kubernetes orientée vers la création de petits clusters de production notamment pour l'informatique embarquée et l'Edge computing. Elle a la caractéristique de rassembler les différents composants d'un cluster kubernetes en un seul "binaire" pouvant s'exécuter en mode `master` (noeud du control plane) ou `agent` (noeud de calcul).
 
@@ -197,6 +181,8 @@ source ~/.bashrc
 - On peut ensuite visualiser les deux contextes de connexion avec `kubectl config get-contexts` et selectionner l'un d'eux avec `kubectl config use-context default`.
 
 - `kubectl get nodes` ou `kubectl cluster-info` permet de vérifier le résultat.
+
+</details>
 
 ### Ajouter les connexions à Lens
 

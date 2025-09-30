@@ -12,7 +12,7 @@ Voir le cours "différents types de cluster"
 
 - `minikube` est une distribution spécialisée pour le dev => avantage : la distribution la plus connue, bien documentée et utilisée dans tous les tutoriels
 - `k3s` est une distribution simple a installer pour le dev ou la prod en particulier pour des contextes edge computing. => avantage : permet de faire de la prod / s'installe sur un serveur.
-- `kind` (Kubernetes IN Docker) une distribution de dev basée sur Docker => avantage : léger, rapide à démarrer, supporte le multinoeud, idéal pour les tests CI/CD.
+- `kind` (Kubernetes IN Docker) une distribution de dev basée sur Docker avantage : léger, rapide à démarrer, supporte le multinoeud, utilise kubeadm en arrière plan -> un cluster kube très standard / vanilla mais proche de la prod. Permet de tester la plupart des solutions y compris des plugins CNI (réseau) et stockage
 
 Nous allons installer l'une ici.
 
@@ -36,7 +36,7 @@ Affichez à nouveau la version `kubectl version`. Cette fois-ci la version de ku
 
 <summary>Installer et configurer kind</summary>
 
-kind (Kubernetes IN Docker) est un outil pour exécuter des clusters Kubernetes locaux en utilisant des conteneurs Docker comme noeuds. Il est particulièrement adapté pour les tests et le développement local.
+
 
 ### Installation de kind
 
@@ -138,27 +138,6 @@ sudo cloud-provider-kind
 ```
 
   Note: Le processus doit rester actif pour que les LoadBalancers fonctionnent.
-
-- Testez le LoadBalancer en créant un service de type LoadBalancer:
-
-```bash
-kubectl create deployment nginx --image=nginx
-kubectl expose deployment nginx --port=80 --type=LoadBalancer
-```
-
-- Vérifiez que le service obtient une IP externe:
-
-```bash
-kubectl get svc nginx
-```
-
-Vous devriez voir une IP externe assignée automatiquement. Cloud Provider KIND crée un nouveau conteneur Docker qui agit comme LoadBalancer pour chaque service de type LoadBalancer.
-
-- Testez l'accès au service:
-  ```bash
-  LB_IP=$(kubectl get svc/nginx -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
-  curl http://$LB_IP
-  ```
 
 ### Gérer les clusters kind
 
