@@ -16,13 +16,11 @@ Inconvénient: Helm ajoute souvent de la complexité non nécessaire car les Cha
 
 Helm ne dispense pas de maîtriser l'administration de son cluster.
 
-## (facultatif) Installer Helm
+## Installer Helm
 
-- Pour installer Helm sur Ubuntu, utilisez : `sudo snap install helm --classic`
+Helm est un binaire installable de nombreuse façons : https://helm.sh/docs/intro/install/
 
-#### Autocomplete
-
-`helm completion bash | sudo tee /etc/bash_completion.d/helm` et relancez votre terminal.
+Nous l'avons installé automatiquement avec asdf et les script dans `/opt`
 
 ## Utiliser un chart Helm pour installer Wordpress
 

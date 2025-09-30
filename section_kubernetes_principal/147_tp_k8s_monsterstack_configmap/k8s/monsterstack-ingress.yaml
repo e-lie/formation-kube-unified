@@ -7,7 +7,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
 spec:
   rules:
-  - host: monsterstack.local
+  - host: elie.formation.dopl.uk
     http:
       paths:
         - path: /

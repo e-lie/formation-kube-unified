@@ -35,7 +35,7 @@ En vous inspirant du TP précédent créez des `deployments` pour `imagebackend`
 
 <details><summary>Correction</summary>
 
-- Complétez `imagebackend.yaml` dans le dossier `k8s-deploy` :
+- Complétez `imagebackend.yaml` dans le dossier `k8s` :
 
 `imagebackend.yaml` :
 
@@ -124,7 +124,7 @@ Pour accéder à l'image dans le cluster nous allons la poussez sur le registry 
 
 <details><summary>Correction: </summary>
 
-Ajoutez au fichier `frontend.yml` du dossier `k8s-deploy` le code suivant:
+Ajoutez au fichier `frontend.yml` du dossier `k8s` le code suivant:
 
 ```yaml
 apiVersion: apps/v1
