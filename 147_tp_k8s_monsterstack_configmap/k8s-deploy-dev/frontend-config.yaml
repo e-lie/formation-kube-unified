@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frontend-config
+data:
+  CONTEXT: "DEV"
+  IMAGEBACKEND_DOMAIN: "imagebackend"
+  REDIS_DOMAIN: "redis"
