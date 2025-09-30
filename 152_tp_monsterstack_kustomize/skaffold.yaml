@@ -1,0 +1,10 @@
+apiVersion: skaffold/v2beta20
+kind: Config
+build:
+  artifacts:
+  - image: registry.kluster.ptych.net/frontend # to reproduce later change with your registry and log to it with docker login
+deploy:
+  kustomize:
+    paths:
+      - k8s-deploy/prod
+      - k8s-deploy/dev

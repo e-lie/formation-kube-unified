@@ -1,0 +1,15 @@
+
+
+configMapGenerator:
+- name: frontend-config
+  literals:
+  - CONTEXT=PROD
+  - IMAGEBACKEND_DOMAIN=imagebackend
+  - REDIS_DOMAIN=redis
+
+resources:
+- frontend.yaml
+- imagebackend.yaml
+- redis.yaml
+- redis-data-pvc.yaml
+- monsterstack-ingress.yaml

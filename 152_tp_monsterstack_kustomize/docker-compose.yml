@@ -1,0 +1,28 @@
+version: '3'
+services:
+  frontend:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - CONTEXT=DEV
+      - REDIS_DOMAIN=redis
+      - IMAGEBACKEND_DOMAIN=imagebackend
+    networks:
+      - monster_network
+    volumes:
+      - ./app:/app # used for hot reload off app code if CONTEXT is DEV (flask dev server)
+
+  imagebackend:
+    image: amouat/dnmonster:1.0
+    networks:
+      - monster_network
+
+  redis:
+    image: redis
+    networks:
+      - monster_network
+
+networks:
+  monster_network:
+    driver: bridge

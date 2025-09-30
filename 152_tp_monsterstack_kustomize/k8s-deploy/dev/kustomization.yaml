@@ -1,0 +1,20 @@
+
+configMapGenerator:
+- name: frontend-config
+  behavior: replace
+  literals:
+  - CONTEXT=DEV
+  - IMAGEBACKEND_DOMAIN=imagebackend-dev
+  - REDIS_DOMAIN=redis-dev
+
+bases:
+- ../base
+
+nameSuffix: -dev
+
+patchesJson6902:
+  - target:
+      version: networking.k8s.io/v1
+      kind: Ingress
+      name: frontend
+    path: ./ingress-domain.yaml # json 6902 patch
