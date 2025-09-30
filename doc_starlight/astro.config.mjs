@@ -9,14 +9,22 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Formation Kubernetes',
-			description: 'Guide complet pour apprendre Terraform avec AWS',
+			description: 'Guide complet pour apprendre Kubernetes, Helm et Istio',
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/e-lie/formation-terraform-unified' }
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/e-lie/formation-kubernetes-unified' }
 			],
 			sidebar: [
 				{
-					label: 'Formation Kubernetes',
-					autogenerate: { directory: 'guides' },
+					label: 'Kubernetes Principal',
+					autogenerate: { directory: 'kubernetes-principal' },
+				},
+				{
+					label: 'Helm',
+					autogenerate: { directory: 'helm' },
+				},
+				{
+					label: 'Istio & Service Mesh',
+					autogenerate: { directory: 'istio' },
 				},
 			],
 			customCss: [

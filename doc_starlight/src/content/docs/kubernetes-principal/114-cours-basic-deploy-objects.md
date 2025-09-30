@@ -150,7 +150,7 @@ Fournir à l'application une façon d'indiquer qu'elle est disponible, c'est-à-
 
 ## L'architecture découplée des services Kubernetes
 
-![](/114_cours_basic_deploy_objects/images/deploy-decoupled-pattern.png)
+![](/section_kubernetes_principal/114_cours_basic_deploy_objects/images/deploy-decoupled-pattern.png)
 
 Comme nous l'avons vu dans le TP1, déployer une application dans kubernetes demande plusieurs étapes. En réalité en plus des **pods** l'ensemble de la gestion d'un service applicatif se décompose dans Kubernetes en 3 à 4 objets articulés entre eux:
 
@@ -163,7 +163,7 @@ Comme nous l'avons vu dans le TP1, déployer une application dans kubernetes dem
 
 Les déploiements sont les objets effectivement créés manuellement lorsqu'on déploie une application. Ce sont des objets de plus haut niveau que les **pods** et **replicaset** et les pilote pour gérer un déploiement applicatif.
 
-![](/114_cours_basic_deploy_objects/images/wiki-ciscolinux-co-uk-russiandolls.png)
+![](/section_kubernetes_principal/114_cours_basic_deploy_objects/images/wiki-ciscolinux-co-uk-russiandolls.png)
 *Les poupées russes Kubernetes : un Deployment contient un ReplicaSet, qui contient des Pods, qui contiennent des conteneurs*
 
 Si c'est nécessaire d'avoir ces trois types de ressources c'est parce que Kubernetes respecte un principe de découplage des responsabilités.
@@ -242,7 +242,7 @@ Les Services sont de trois types principaux :
 
 - `LoadBalancer`: expose le service en externe à l'aide d'un Loadbalancer de fournisseur de cloud. Les services NodePort et ClusterIP, vers lesquels le Loadbalancer est dirigé sont automatiquement créés.
 
-![](/114_cours_basic_deploy_objects/images/k8s-services.drawio.png)
+![](/section_kubernetes_principal/114_cours_basic_deploy_objects/images/k8s-services.drawio.png)
 <!-- *Crédits à [Ahmet Alp Balkan](https://medium.com/@ahmetb) pour les schémas* -->
 
 Deux autres types plus avancés:

@@ -14,7 +14,7 @@ Les services sont les objets réseau de base. Voir cours précédent sur les obj
 
 ## Les objets Ingresses
 
-![](/142_cours_k8s_networks/images/ingress.png)
+![](/section_kubernetes_principal/142_cours_k8s_networks/images/ingress.png)
 *Crédits [Ahmet Alp Balkan](https://medium.com/@ahmetb)*
 
 Un Ingress est un objet pour gérer dynamiquement le **reverse proxy** HTTP/HTTPS dans Kubernetes. Documentation: https://kubernetes.io/docs/concepts/services-networking/ingress/#what-is-ingress

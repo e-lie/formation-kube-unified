@@ -104,7 +104,7 @@ Quelques exemples d'opérateurs:
 
 Les opérateurs sont souvent répertoriés sur le site: https://operatorhub.io/
 
-![](/150_cours_methodes_install_apps/images/k8s_crd.png)
+![](/section_kubernetes_principal/150_cours_methodes_install_apps/images/k8s_crd.png)
 
 Avec les opérateurs il est possible d'ajouter des nouvelles fonctionnalités quasi-natives à notre Cluster. Ce mode d'extensibilité est un des points qui fait la force et la relative universalité de Kubernetes.
 

@@ -18,12 +18,37 @@ const TARGET_PUBLIC_DIR = join(__dirname, 'public');
 // Avec un domaine custom, pas besoin de base path
 const BASE_PATH = process.env.BASE_PATH || '';
 
-// Fonction pour découvrir automatiquement les dossiers avec pattern 3 chiffres
-function discoverDirectories() {
+// Configuration des sections
+const SECTIONS = [
+  { 
+    name: 'section_kubernetes_principal',
+    targetDir: 'kubernetes-principal',
+    label: 'Kubernetes Principal'
+  },
+  { 
+    name: 'section_helm',
+    targetDir: 'helm',
+    label: 'Helm'
+  },
+  { 
+    name: 'section_istio',
+    targetDir: 'istio',
+    label: 'Istio & Service Mesh'
+  }
+];
+
+// Fonction pour découvrir automatiquement les dossiers dans une section
+function discoverSectionDirectories(sectionName) {
   const mapping = {};
+  const sectionPath = join(SOURCE_DIR, sectionName);
+  
+  if (!existsSync(sectionPath)) {
+    console.log(`⚠️  Section ${sectionName} does not exist yet`);
+    return mapping;
+  }
   
   try {
-    const items = readdirSync(SOURCE_DIR, { withFileTypes: true });
+    const items = readdirSync(sectionPath, { withFileTypes: true });
     const directories = items.filter(dirent => dirent.isDirectory());
     
     directories.forEach(dir => {
@@ -33,7 +58,7 @@ function discoverDirectories() {
       const threeDigitMatch = dirName.match(/^(\d{3})_(.*)/);
       if (threeDigitMatch) {
         const [, digits, name] = threeDigitMatch;
-        const dirPath = join(SOURCE_DIR, dirName);
+        const dirPath = join(sectionPath, dirName);
         
         // Chercher le premier fichier markdown dans ce dossier
         try {
@@ -41,25 +66,10 @@ function discoverDirectories() {
           const markdownFile = files.find(file => file.endsWith('.md'));
           
           if (markdownFile) {
-            const sourcePath = `${dirName}/${markdownFile}`;
-            const targetPath = `guides/${dirName.toLowerCase().replace(/_/g, '-')}.md`;
-            mapping[sourcePath] = targetPath;
-          }
-        } catch (error) {
-          console.warn(`⚠️  Could not read directory ${dirName}:`, error.message);
-        }
-      }
-      
-      // Garder le pattern spécial pour partmaybe_vpc_networking
-      if (dirName === 'partmaybe_vpc_networking') {
-        const dirPath = join(SOURCE_DIR, dirName);
-        try {
-          const files = readdirSync(dirPath);
-          const markdownFile = files.find(file => file.endsWith('.md'));
-          
-          if (markdownFile) {
-            const sourcePath = `${dirName}/${markdownFile}`;
-            const targetPath = `guides/${dirName.toLowerCase().replace(/_/g, '-')}.md`;
+            const sourcePath = `${sectionName}/${dirName}/${markdownFile}`;
+            // Trouver la section config
+            const section = SECTIONS.find(s => s.name === sectionName);
+            const targetPath = `${section.targetDir}/${dirName.toLowerCase().replace(/_/g, '-')}.md`;
             mapping[sourcePath] = targetPath;
           }
         } catch (error) {
@@ -68,19 +78,33 @@ function discoverDirectories() {
       }
     });
     
-    console.log('📁 Discovered directories:', Object.keys(mapping));
     return mapping;
   } catch (error) {
-    console.error('❌ Error discovering directories:', error.message);
+    console.error(`❌ Error discovering directories in ${sectionName}:`, error.message);
     return {};
   }
 }
 
+// Fonction pour découvrir tous les dossiers
+function discoverAllDirectories() {
+  let allMapping = {};
+  
+  SECTIONS.forEach(section => {
+    const sectionMapping = discoverSectionDirectories(section.name);
+    allMapping = { ...allMapping, ...sectionMapping };
+    if (Object.keys(sectionMapping).length > 0) {
+      console.log(`📁 Section ${section.label}:`, Object.keys(sectionMapping).map(p => basename(dirname(p))));
+    }
+  });
+  
+  return allMapping;
+}
+
 // Configuration de mapping des fichiers (généré dynamiquement)
-const FILE_MAPPING = discoverDirectories();
+const FILE_MAPPING = discoverAllDirectories();
 
 // Fonction pour extraire le frontmatter et ajouter les métadonnées Starlight
-function processMarkdownContent(content, filename, sourceDirName = '') {
+function processMarkdownContent(content, filename, sourceDirName = '', sectionName = '') {
   // Extraire le frontmatter existant s'il y en a un
   const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   
@@ -121,11 +145,11 @@ function processMarkdownContent(content, filename, sourceDirName = '') {
   }
   
   // Corriger les chemins d'images
-  // Transformer: images/diagram.png → /formation-terraform-unified/400_simple_vpc/images/diagram.png
-  if (sourceDirName) {
+  // Transformer: images/diagram.png → /section_kubernetes_principal/400_simple_vpc/images/diagram.png
+  if (sourceDirName && sectionName) {
     bodyContent = bodyContent.replace(
       /!\[([^\]]*)\]\(images\/([^)]+)\)/g,
-      `![$1](${BASE_PATH}/${sourceDirName}/images/$2)`
+      `![$1](${BASE_PATH}/${sectionName}/${sourceDirName}/images/$2)`
     );
   }
   
@@ -158,11 +182,12 @@ function syncMarkdownFile(sourcePath, targetPath) {
     
     const content = readFileSync(sourcePath, 'utf-8');
     
-    // Extraire le nom du dossier source pour les chemins d'images
-    const sourceDir = dirname(sourcePath);
-    const sourceDirName = basename(sourceDir);
+    // Extraire le nom du dossier source et de la section pour les chemins d'images
+    const pathParts = sourcePath.replace(SOURCE_DIR + '/', '').split('/');
+    const sectionName = pathParts[0];
+    const sourceDirName = pathParts[1];
     
-    const processedContent = processMarkdownContent(content, basename(sourcePath), sourceDirName);
+    const processedContent = processMarkdownContent(content, basename(sourcePath), sourceDirName, sectionName);
     
     // Créer le répertoire cible si nécessaire
     mkdirSync(dirname(targetPath), { recursive: true });
@@ -195,34 +220,41 @@ function syncImageFile(sourcePath, targetPath) {
 function cleanupOrphanedFiles() {
   console.log('🧹 Cleaning up orphaned files...');
   
-  // Nettoyer les fichiers markdown orphelins
-  if (existsSync(TARGET_DIR)) {
-    try {
-      const targetFiles = readdirSync(join(TARGET_DIR, 'guides'), { withFileTypes: true })
-        .filter(dirent => dirent.isFile() && dirent.name.endsWith('.md'))
-        .map(dirent => dirent.name);
-      
-      const expectedFiles = Object.values(FILE_MAPPING).map(path => basename(path));
-      
-      targetFiles.forEach(file => {
-        if (!expectedFiles.includes(file)) {
-          const filePath = join(TARGET_DIR, 'guides', file);
-          console.log(`🗑️  Removing orphaned markdown: ${file}`);
-          unlinkSync(filePath);
-        }
-      });
-    } catch (error) {
-      console.warn('⚠️  Could not clean up markdown files:', error.message);
+  // Nettoyer les fichiers markdown orphelins dans chaque section
+  SECTIONS.forEach(section => {
+    const sectionTargetDir = join(TARGET_DIR, section.targetDir);
+    if (existsSync(sectionTargetDir)) {
+      try {
+        const targetFiles = readdirSync(sectionTargetDir, { withFileTypes: true })
+          .filter(dirent => dirent.isFile() && dirent.name.endsWith('.md'))
+          .map(dirent => dirent.name);
+        
+        const expectedFiles = Object.entries(FILE_MAPPING)
+          .filter(([, targetPath]) => targetPath.startsWith(section.targetDir + '/'))
+          .map(([, targetPath]) => basename(targetPath));
+        
+        targetFiles.forEach(file => {
+          if (!expectedFiles.includes(file)) {
+            const filePath = join(sectionTargetDir, file);
+            console.log(`🗑️  Removing orphaned markdown: ${file}`);
+            unlinkSync(filePath);
+          }
+        });
+      } catch (error) {
+        console.warn(`⚠️  Could not clean up markdown files in ${section.targetDir}:`, error.message);
+      }
     }
-  }
+  });
   
-  // Nettoyer les images orphelines - découvrir automatiquement les dossiers d'images
+  // Nettoyer les images orphelines
   const imageFolders = [];
   
   // Chercher les dossiers d'images dans tous les dossiers découverts
   Object.keys(FILE_MAPPING).forEach(sourcePath => {
-    const dirName = dirname(sourcePath);
-    const imageFolder = join(dirName, 'images');
+    const pathParts = sourcePath.split('/');
+    const sectionName = pathParts[0];
+    const dirName = pathParts[1];
+    const imageFolder = join(sectionName, dirName, 'images');
     const fullImagePath = join(SOURCE_DIR, imageFolder);
     
     if (existsSync(fullImagePath)) {
@@ -278,10 +310,12 @@ function syncAllFiles() {
     }
   });
   
-  // Synchroniser les images - découvrir automatiquement les dossiers d'images
+  // Synchroniser les images
   Object.keys(FILE_MAPPING).forEach(sourcePath => {
-    const dirName = dirname(sourcePath);
-    const imageFolder = join(dirName, 'images');
+    const pathParts = sourcePath.split('/');
+    const sectionName = pathParts[0];
+    const dirName = pathParts[1];
+    const imageFolder = join(sectionName, dirName, 'images');
     const fullImagePath = join(SOURCE_DIR, imageFolder);
     
     if (existsSync(fullImagePath)) {
@@ -310,11 +344,13 @@ function startFileWatcher() {
     ignoreInitial: true
   });
   
-  // Watcher pour les images - découvrir automatiquement les patterns
+  // Watcher pour les images
   const imagePatterns = [];
   Object.keys(FILE_MAPPING).forEach(sourcePath => {
-    const dirName = dirname(sourcePath);
-    const imagePattern = join(SOURCE_DIR, dirName, 'images/*.{png,jpg,jpeg,gif,svg,webp}');
+    const pathParts = sourcePath.split('/');
+    const sectionName = pathParts[0];
+    const dirName = pathParts[1];
+    const imagePattern = join(SOURCE_DIR, sectionName, dirName, 'images/*.{png,jpg,jpeg,gif,svg,webp}');
     imagePatterns.push(imagePattern);
   });
   
@@ -393,6 +429,7 @@ function main() {
   const watchMode = args.includes('--watch') || args.includes('-w');
   
   console.log('🚀 Starting documentation sync...');
+  console.log('📚 Configured sections:', SECTIONS.map(s => s.label).join(', '));
   
   // Synchronisation initiale
   syncAllFiles();

@@ -2,11 +2,11 @@
 title: "Cours - Les différents contrôleurs pour les pods"
 description: "Guide Cours - Les différents contrôleurs pour les pods"
 sidebar:
-  order: 151
+  order: 161
 ---
 
 
-![](/151_cours_alt_pod_controllers/images/resources-deps.jpg)
+![](/section_kubernetes_principal/161_cours_alt_pod_controllers/images/resources-deps.jpg)
 
 En plus du déploiement d'un application, Il existe pleins d'autre raisons de créer un ensemble de Pods:
 

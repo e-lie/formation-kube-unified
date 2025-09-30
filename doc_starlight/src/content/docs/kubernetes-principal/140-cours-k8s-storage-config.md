@@ -41,7 +41,7 @@ spec:
 
 La problématique des volumes et du stockage est plus compliquée dans kubernetes que dans docker car k8s cherche à répondre à de nombreux cas d'usages. [doc officielle](https://kubernetes.io/fr/docs/concepts/storage/volumes/). Il y a donc de nombeux types de volumes kubernetes correspondants à des usages de base et aux solutions proposées par les principaux fournisseurs de cloud.
 
-![](/140_cours_k8s_storage_config/images/resources-deps.jpg)
+![](/section_kubernetes_principal/140_cours_k8s_storage_config/images/resources-deps.jpg)
 
 <!-- 
 Mentionnons quelques d'usage de base des volumes:
