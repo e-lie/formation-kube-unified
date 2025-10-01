@@ -17,14 +17,16 @@ spec:
     app: redis
 
 ---
-# Service pour accéder au master (redis-0)
+# Service master Redis (nommé "redis" pour compatibilité avec l'application existante)
+# Pointe uniquement vers redis-0 (master) pour les écritures
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-master
+  name: redis
   namespace: default
   labels:
     app: redis
+    role: master
 spec:
   type: ClusterIP
   ports:
@@ -52,22 +54,3 @@ spec:
       name: redis
   selector:
     app: redis
-
----
-# Service de compatibilité (pour l'application existante qui cherche "redis")
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis
-  namespace: default
-  labels:
-    app: redis
-spec:
-  type: ClusterIP
-  ports:
-    - port: 6379
-      targetPort: 6379
-      name: redis
-  selector:
-    app: redis
-    statefulset.kubernetes.io/pod-name: redis-0

@@ -40,7 +40,7 @@ Redis en mode réplication nécessite :
 - Une persistance des données même après redémarrage
 - Une configuration différente pour master et slaves
 
-## Étape 2 : Créer la ConfigMap Redis
+## Créer la ConfigMap Redis
 
 Créez un fichier `redis-configmap.yaml` :
 
@@ -103,7 +103,7 @@ data:
 - Le master (redis-0) a la configuration de persistance activée
 - Les slaves pointent vers `redis-0.redis-headless` pour la réplication
 
-## Étape 3 : Créer les Services
+## Créer les Services
 
 ### Service Headless pour la découverte
 
@@ -164,12 +164,12 @@ spec:
     app: redis
 ```
 
-**Points clés :**
+**Explications de nos services :**
 - `redis-headless` : Service headless pour DNS stable (redis-0.redis-headless, redis-1.redis-headless, etc.)
-- `redis-master` : Pointe uniquement vers redis-0 pour les écritures
+- `redis` : Pointe uniquement vers redis-0 (master) pour les écritures - nommé ainsi pour compatibilité avec l'application existante
 - `redis-replicas` : Load balance sur tous les pods pour les lectures
 
-## Étape 4 : Créer le StatefulSet
+## Créer le StatefulSet
 
 Créez un fichier `redis-statefulset.yaml` :
 
@@ -261,25 +261,25 @@ spec:
             storage: 1Gi
 ```
 
-**Points clés :**
+**Quelques précisions sur le code:**
 - `initContainer` : Configure le pod selon son ordinal (redis-0 = master, autres = slaves)
 - `volumeClaimTemplates` : Crée un PVC unique pour chaque pod
 - Les probes vérifient la santé de Redis
 
-## Étape 5 : Mettre à jour l'application
+## Mettre à jour l'application
 
-Modifiez le service Redis dans les déploiements Frontend et ImageBackend pour utiliser `redis-master` pour les écritures :
+L'application peut continuer à utiliser le service `redis` sans modification, car il pointe automatiquement vers le master :
 
 ```yaml
-# Dans frontend.yaml et imagebackend.yaml
+# Dans frontend.yaml et imagebackend.yaml (inchangé depuis le TP 147)
 env:
   - name: REDIS_HOST
-    value: "redis-master"  # Utiliser le service master pour les écritures
+    value: "redis"  # Pointe vers le master (redis-0) pour les écritures
   - name: REDIS_PORT
     value: "6379"
 ```
 
-## Étape 6 : Déployer l'application
+## Déployer l'application
 
 ```bash
 # Créer le namespace si nécessaire
@@ -299,7 +299,7 @@ kubectl apply -f imagebackend.yaml
 kubectl apply -f monsterstack-ingress.yaml
 ```
 
-## Étape 7 : Vérifier le déploiement
+## Vérifier le déploiement
 
 ### Vérifier les pods
 
@@ -336,14 +336,14 @@ kubectl exec -it redis-1 -- redis-cli GET test
 ```bash
 # Vérifier les endpoints
 kubectl get endpoints redis-headless
-kubectl get endpoints redis-master
+kubectl get endpoints redis
 kubectl get endpoints redis-replicas
 
 # Tester la résolution DNS
 kubectl run -it --rm debug --image=alpine --restart=Never -- nslookup redis-0.redis-headless
 ```
 
-## Étape 8 : Tester la persistance
+## Tester la persistance
 
 ```bash
 # Créer des données
@@ -360,7 +360,7 @@ kubectl exec -it redis-0 -- redis-cli GET persistent
 # Doit retourner "data"
 ```
 
-## Étape 9 : Scaler le StatefulSet
+## Scaler le StatefulSet
 
 ```bash
 # Augmenter le nombre de replicas
