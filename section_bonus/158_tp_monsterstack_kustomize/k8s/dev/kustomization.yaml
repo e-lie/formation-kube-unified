@@ -1,20 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../base
+
+nameSuffix: -dev
 
 configMapGenerator:
 - name: frontend-config
   behavior: replace
   literals:
   - CONTEXT=DEV
-  - IMAGEBACKEND_DOMAIN=imagebackend-dev
-  - REDIS_DOMAIN=redis-dev
+  - IMAGEBACKEND_DOMAIN=imagebackend
+  - REDIS_DOMAIN=redis
 
-bases:
-- ../base
-
-nameSuffix: -dev
-
-patchesJson6902:
-  - target:
-      version: networking.k8s.io/v1
-      kind: Ingress
-      name: frontend
-    path: ./ingress-domain.yaml # json 6902 patch
+patches:
+- target:
+    kind: Ingress
+    name: monsterstack
+  path: ./ingress-domain.yaml

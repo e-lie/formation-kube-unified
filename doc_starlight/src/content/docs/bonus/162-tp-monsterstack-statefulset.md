@@ -5,3 +5,7 @@ sidebar:
   order: 162
 ---
 
+---
+title: "TP - statefulset monsterstack
+draft: false
+---

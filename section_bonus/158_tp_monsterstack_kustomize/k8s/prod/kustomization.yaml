@@ -1,23 +1,22 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../base
+
+nameSuffix: -prod
+
 configMapGenerator:
 - name: frontend-config
   behavior: replace
   literals:
   - CONTEXT=PROD
-  - IMAGEBACKEND_DOMAIN=imagebackend-prod
-  - REDIS_DOMAIN=redis-prod
-  - INGRESS_DOMAIN=prod.monsterstack.scalelaab.dopl.uk
+  - IMAGEBACKEND_DOMAIN=imagebackend
+  - REDIS_DOMAIN=redis
 
-bases:
-- ../base
-
-nameSuffix: -prod
-
-patchesJson6902:
-  - target:
-      version: networking.k8s.io/v1
-      kind: Ingress
-      name: frontend
-    path: ./ingress-domain.yaml # json 6902 patch
-
-patchesStrategicMerge:
-- ./frontend-replicas.yaml # strategicMerge patch
+patches:
+- target:
+    kind: Ingress
+    name: monsterstack
+  path: ./ingress-domain.yaml
+- path: ./frontend-replicas.yaml
