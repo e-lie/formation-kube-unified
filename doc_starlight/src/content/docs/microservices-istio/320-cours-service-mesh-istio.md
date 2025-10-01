@@ -44,13 +44,21 @@ Il offrent un moyen uniforme et efficace de sécuriser, connecter et surveiller 
 
 - Istio est conçu pour être extensible et gère une grande variété de besoins de déploiement.
 
-### Architecture de Istio
+### Architecture de Istio - Mode Sidecar (Classique)
 
-![](/img/kubernetes/istio_archi.png)
+![Architecture Istio Sidecar](/section_microservices_istio/320_cours_service_mesh_istio/images/istio-sidecar-architecture.svg)
 
-- Istiod (auparavant 3 composant séparés fusionnés pour la simplicité opérationnelle) est le controlleur du control plane istio
-- Le mesh des sidecar proxies est le dataplane de istio
-- Les ingress et egress gateways sont les point d'accès à votre mesh de service et permettent de définir des règles de routage et de sécurité en périphérie du mesh.
+**Composants principaux :**
+
+- **Istiod** (Control Plane) : Contrôleur centralisé qui gère la configuration, la découverte de services, et la distribution des certificats
+- **Envoy Proxies** (Data Plane) : Proxies sidecar injectés dans chaque pod pour intercepter et gérer le trafic
+- **Ingress/Egress Gateways** : Points d'entrée et de sortie du mesh pour le trafic externe
+
+**Fonctionnement :**
+1. **Istiod** configure les proxies via l'API xDS (configuration dynamique)
+2. Chaque **sidecar Envoy** intercepte tout le trafic entrant/sortant de son pod
+3. Communication sécurisée avec **mTLS automatique** entre les services
+4. **Télémétrie** centralisée (métriques, logs, traces) remontée vers Istiod
 
 ### Istio par l'exemple et autres resources
 
@@ -74,7 +82,6 @@ Istio utilise plusieurs Custom Resource Definitions (CRDs) pour étendre les fon
 
 - **AuthorizationPolicy** : Le CRD `AuthorizationPolicy` est utilisé pour définir des politiques de contrôle d'accès basées sur les rôles et les permissions pour les services dans le maillage Istio. Il permet de spécifier des règles d'autorisation pour limiter l'accès aux services en fonction des identités et des attributs de requête.
 
-
 ### Istio et API Gateway
 
 Istio soutient la standardisation via la norme API gateway de Kubernetes. Il est donc possible d'utiliser les CRDs de l'api gateway pour configurer le routage du traffic et les points d'entrée du mesh plutôt que les CRDs de Istio.
@@ -83,11 +90,38 @@ En l'état actuel l'api gateway ne supporte pas tous les cas d'usage de Istio et
 
 Les CRDs de l'API Gateway officiel doivent être installés indépendament de Istio
 
-### Ambient mesh architecture
+### Architecture Ambient Mesh (Nouvelle approche)
 
-L'architecture classique de Istio avec des proxies pour chaque pod est un peu lourde à mettre en oeuvre et peut interfèrer avec d'autres solutions kubernetes.
+![Architecture Istio Ambient](/section_microservices_istio/320_cours_service_mesh_istio/images/istio-ambient-architecture.svg)
 
-Istio développe une nouvelle architecture appelée ambient mesh, basée sur des agents déployés sur chaque noeuds du cluster. Elle est encore alpha mais promet un usage plus simple et économe de Istio dans un futur proche.
+L'architecture classique de Istio avec des proxies sidecar pour chaque pod peut être lourde à mettre en œuvre et consommatrice en ressources. Istio développe une nouvelle architecture appelée **Ambient Mesh** qui simplifie le déploiement.
+
+**Composants de l'Ambient Mesh :**
+
+- **ztunnel** : Proxy L4 déployé sur chaque nœud (DaemonSet) qui gère :
+  - La sécurité mTLS entre les nœuds
+  - L'identité des workloads
+  - La redirection du trafic via eBPF/CNI
+  - La télémétrie de niveau 4
+
+- **Waypoint Proxies** (optionnels) : Proxies L7 déployés uniquement quand nécessaire pour :
+  - Les politiques avancées (autorisation fine, rate limiting)
+  - Le routage complexe et circuit breakers
+  - Les fonctionnalités L7 (HTTP headers, retries)
+
+**Avantages de l'Ambient Mesh :**
+
+1. **Simplicité** : Pas de modification des pods applicatifs (pas de sidecar)
+2. **Performance** : Moins de ressources consommées, communication directe L4
+3. **Adoption progressive** : Activation du mesh par namespace sans redéploiement
+4. **Flexibilité** : L7 uniquement quand nécessaire via les Waypoint Proxies
+
+**Mode de fonctionnement :**
+
+1. Le trafic entre pods est automatiquement intercepté par **ztunnel** via CNI
+2. **ztunnel** assure la sécurité mTLS et l'observabilité L4
+3. Si des politiques L7 sont requises, le trafic passe par un **Waypoint Proxy**
+4. La configuration reste centralisée via **Istiod**
 
 
 <!-- ## Essayer Istio

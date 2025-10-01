@@ -1,0 +1,63 @@
+graph TB
+    subgraph "Kubernetes Cluster"
+        subgraph "Control Plane"
+            CP[🎛️ Istiod<br/>- Service Discovery<br/>- Configuration<br/>- Certificate Management<br/>- Proxy Configuration]
+        end
+        
+        subgraph "Namespace: default"
+            subgraph "Pod A: Frontend"
+                AppA[🌐 Frontend App<br/>Port 3000]
+                ProxyA[📡 Envoy Proxy<br/>Sidecar]
+                AppA -.->|localhost| ProxyA
+            end
+            
+            subgraph "Pod B: API"
+                AppB[⚙️ API Service<br/>Port 8080]
+                ProxyB[📡 Envoy Proxy<br/>Sidecar]
+                AppB -.->|localhost| ProxyB
+            end
+            
+            subgraph "Pod C: Database"
+                AppC[🗄️ Database<br/>Port 5432]
+                ProxyC[📡 Envoy Proxy<br/>Sidecar]
+                AppC -.->|localhost| ProxyC
+            end
+        end
+        
+        subgraph "Ingress Gateway"
+            GW[🚪 Istio Gateway<br/>External Entry Point]
+        end
+        
+        subgraph "External Traffic"
+            EXT[🌍 External Users]
+        end
+    end
+    
+    %% Control plane connections
+    CP -.->|xDS API<br/>Configuration| ProxyA
+    CP -.->|xDS API<br/>Configuration| ProxyB
+    CP -.->|xDS API<br/>Configuration| ProxyC
+    CP -.->|Configuration| GW
+    
+    %% Data plane connections
+    EXT -->|HTTPS| GW
+    GW -->|mTLS| ProxyA
+    ProxyA -->|mTLS<br/>Load Balancing<br/>Circuit Breaker| ProxyB
+    ProxyB -->|mTLS<br/>Retry Logic<br/>Timeout| ProxyC
+    
+    %% Observability
+    ProxyA -.->|Telemetry<br/>Metrics, Logs, Traces| CP
+    ProxyB -.->|Telemetry<br/>Metrics, Logs, Traces| CP
+    ProxyC -.->|Telemetry<br/>Metrics, Logs, Traces| CP
+    
+    classDef controlPlane fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef app fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef proxy fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef gateway fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef external fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class CP controlPlane
+    class AppA,AppB,AppC app
+    class ProxyA,ProxyB,ProxyC proxy
+    class GW gateway
+    class EXT external

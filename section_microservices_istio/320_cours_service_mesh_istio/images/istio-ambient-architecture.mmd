@@ -1,0 +1,85 @@
+graph TB
+    subgraph "Kubernetes Cluster"
+        subgraph "Control Plane"
+            CP[🎛️ Istiod<br/>- Service Discovery<br/>- Configuration<br/>- Certificate Management<br/>- Waypoint Proxy Config]
+        end
+        
+        subgraph "Node 1"
+            subgraph "ztunnel Pod"
+                ZT1[🔒 ztunnel<br/>- L4 Proxy<br/>- mTLS<br/>- Identity]
+            end
+            
+            subgraph "Regular Pods"
+                AppA[🌐 Frontend App<br/>No Sidecar]
+                AppB[⚙️ API Service<br/>No Sidecar]
+            end
+        end
+        
+        subgraph "Node 2"
+            subgraph "ztunnel Pod"
+                ZT2[🔒 ztunnel<br/>- L4 Proxy<br/>- mTLS<br/>- Identity]
+            end
+            
+            subgraph "Regular Pods"
+                AppC[🗄️ Database<br/>No Sidecar]
+            end
+        end
+        
+        subgraph "Waypoint Proxies (Optional L7)"
+            WP1[🛡️ Waypoint Proxy<br/>Service A<br/>- L7 Policies<br/>- Advanced Routing]
+            WP2[🛡️ Waypoint Proxy<br/>Service B<br/>- L7 Policies<br/>- Circuit Breaking]
+        end
+        
+        subgraph "Ingress Gateway"
+            GW[🚪 Istio Gateway<br/>External Entry Point]
+        end
+        
+        subgraph "External Traffic"
+            EXT[🌍 External Users]
+        end
+    end
+    
+    %% Control plane connections
+    CP -.->|Configuration| ZT1
+    CP -.->|Configuration| ZT2
+    CP -.->|L7 Configuration| WP1
+    CP -.->|L7 Configuration| WP2
+    CP -.->|Configuration| GW
+    
+    %% Data plane connections (L4)
+    EXT -->|HTTPS| GW
+    GW -->|mTLS| ZT1
+    
+    %% Inter-node communication through ztunnel
+    ZT1 <-->|mTLS Tunnel<br/>L4 Only| ZT2
+    
+    %% Applications communicate through local ztunnel
+    AppA -->|Local CNI<br/>Redirect| ZT1
+    AppB -->|Local CNI<br/>Redirect| ZT1
+    AppC -->|Local CNI<br/>Redirect| ZT2
+    
+    %% Optional L7 processing
+    ZT1 -.->|L7 Traffic<br/>When Needed| WP1
+    ZT1 -.->|L7 Traffic<br/>When Needed| WP2
+    WP1 -.->|Processed<br/>L7 Traffic| ZT2
+    WP2 -.->|Processed<br/>L7 Traffic| ZT2
+    
+    %% Observability
+    ZT1 -.->|L4 Telemetry| CP
+    ZT2 -.->|L4 Telemetry| CP
+    WP1 -.->|L7 Telemetry| CP
+    WP2 -.->|L7 Telemetry| CP
+    
+    classDef controlPlane fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef app fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef ztunnel fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef waypoint fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    classDef gateway fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef external fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class CP controlPlane
+    class AppA,AppB,AppC app
+    class ZT1,ZT2 ztunnel
+    class WP1,WP2 waypoint
+    class GW gateway
+    class EXT external

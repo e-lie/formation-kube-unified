@@ -16,7 +16,7 @@ Ce qui illustrera un cas classique de déploiement stateful simple.
 
 ## Architecture
 
-![Architecture Redis StatefulSet](/section_bonus/162_tp_monsterstack_statefulset/images/redis-architecture.png)
+![Architecture Redis StatefulSet](/section_bonus/162_tp_monsterstack_statefulset/images/redis-architecture.svg)
 
 ## Comprendre les StatefulSets
 
