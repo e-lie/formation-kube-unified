@@ -4,7 +4,7 @@ title: Cours - Objets Fondamentaux pour déployer une application
 
 ### Les namespaces
 
-Tous les objets Kubernetes sont rangés dans différents espaces de travail isolés appelés `namespaces`.
+Tous les objets Kubernetes sont rangés dans différents espaces de travail isolés appelés [`namespaces`](https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/).
 
 Cette isolation permet plusieurs choses :
 
@@ -26,7 +26,7 @@ Kubernetes gère lui-même ses composants internes sous forme de pods et service
 
 ### Les Pods
 
-Un Pod est l'unité de base d'une application Kubernetes que vous déployez : un Pod est un `groupe atomique de conteneurs`, ce qui veut dire qu'il est garanti que ces conteneurs atterrirons sur le même noeud et seront toujours lancé ensembles et connectés.
+Un [Pod](https://kubernetes.io/docs/concepts/workloads/pods/) est l'unité de base d'une application Kubernetes que vous déployez : un Pod est un `groupe atomique de conteneurs`, ce qui veut dire qu'il est garanti que ces conteneurs atterrirons sur le même noeud et seront toujours lancé ensembles et connectés.
 
 Un Pod comprend en plus des conteneurs, des `ressources de stockage`, `une IP réseau unique`, et des options qui contrôlent comment le ou les conteneurs doivent s'exécuter (ex: `restart policy`). Cette collection de conteneurs tournent ainsicdans le même environnement d'exécution mais les processus sont isolés.
 
@@ -44,18 +44,18 @@ Pour plus de détail sur la philosophie des pods, vous pouvez consulter [ce bon 
 
 Kubernetes fournit un ensemble de commande pour débugger des conteneurs :
 
-- `kubectl logs <pod-name> -c <conteneur_name>` (le nom du conteneur est inutile si un seul)
-- `kubectl exec -it <pod-name> -c <conteneur_name> -- bash`
-- `kubectl attach -it <pod-name>`
+- [`kubectl logs`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/) `<pod-name> -c <conteneur_name>` (le nom du conteneur est inutile si un seul)
+- [`kubectl exec`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_exec/) `-it <pod-name> -c <conteneur_name> -- bash`
+- [`kubectl attach`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_attach/) `-it <pod-name>`
 
 Enfin, pour debugger la sortie réseau d'un programme on peut rapidement forwarder un port depuis un pods vers l'extérieur du cluster :
 
-- `kubectl port-forward <pod-name> <port_interne>:<port_externe>`
+- [`kubectl port-forward`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_port-forward/) `<pod-name> <port_interne>:<port_externe>`
 - C'est une commande de debug seulement : pour exposer correctement des processus k8s, il faut créer un service, par exemple avec `NodePort`.
 
-Pour copier un fichier dans un pod on peut utiliser: `kubectl cp <pod-name>:</path/to/remote/file> </path/to/local/file>`
+Pour copier un fichier dans un pod on peut utiliser: [`kubectl cp`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_cp/) `<pod-name>:</path/to/remote/file> </path/to/local/file>`
 
-Pour monitorer rapidement les ressources consommées par un ensemble de processus il existe les commande `kubectl top nodes` et `kubectl top pods`
+Pour monitorer rapidement les ressources consommées par un ensemble de processus il existe les commande [`kubectl top`](https://kubernetes.io/docs/reference/kubectl/generated/kubectl_top/) `nodes` et `kubectl top pods`
 
 #### Un manifeste de Pod
 
@@ -129,8 +129,8 @@ L'objectif est de permettre la haute disponibilité : on veut que notre service 
 
 Fournir à l'application une façon d'indiquer qu'elle est disponible, c'est-à-dire :
 
-- qu'elle est démarrée (_liveness_)
-- qu'elle peut répondre aux requêtes (_readiness_).
+- qu'elle est démarrée ([_liveness_](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-a-liveness-http-request))
+- qu'elle peut répondre aux requêtes ([_readiness_](https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/#define-readiness-probes)).
 
 ### Application microservices
 
@@ -157,7 +157,7 @@ Comme nous l'avons vu dans le TP1, déployer une application dans kubernetes dem
 
 ### Les Deployments (deploy)
 
-Les déploiements sont les objets effectivement créés manuellement lorsqu'on déploie une application. Ce sont des objets de plus haut niveau que les **pods** et **replicaset** et les pilote pour gérer un déploiement applicatif.
+Les [déploiements](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) sont les objets effectivement créés manuellement lorsqu'on déploie une application. Ce sont des objets de plus haut niveau que les **pods** et **replicaset** et les pilote pour gérer un déploiement applicatif.
 
 ![](images/wiki-ciscolinux-co-uk-russiandolls.png)
 *Les poupées russes Kubernetes : un Deployment contient un ReplicaSet, qui contient des Pods, qui contiennent des conteneurs*
@@ -204,18 +204,18 @@ spec:
 
 ### Les ReplicaSets (rs)
 
-Dans notre modèle, les **ReplicaSet** servent à gérer et sont responsables pour:
+Dans notre modèle, les [**ReplicaSet**](https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/) servent à gérer et sont responsables pour:
 
 - la réplication (avoir le bon nombre d'instances et le scaling)
 - la santé et le redémarrage automatique des pods de l'application (Self-Healing)
 
 - `kubectl get rs` pour afficher la liste des replicas.
 
-En général on ne les manipule pas directement (c'est déconseillé) même s'il est possible de les modifier et de les créer avec un fichier de ressource. Pour créer des groupes de conteneurs on utilise soit un **Deployment** soit d'autres formes de workloads (**DaemonSet**, **StatefulSet**, **Job**) adaptés à d'autres cas.
+En général on ne les manipule pas directement (c'est déconseillé) même s'il est possible de les modifier et de les créer avec un fichier de ressource. Pour créer des groupes de conteneurs on utilise soit un [**Deployment**](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/) soit d'autres formes de workloads ([**DaemonSet**](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), [**StatefulSet**](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/), [**Job**](https://kubernetes.io/docs/concepts/workloads/controllers/job/)) adaptés à d'autres cas.
 
 ### Les Services
 
-Dans Kubernetes, un **service** est un objet qui :
+Dans Kubernetes, un [**service**](https://kubernetes.io/docs/concepts/services-networking/service/) est un objet qui :
 - Désigne un ensemble de pods (grâce à des labels) généralement géré par un déploiement.
 - Fournit un endpoint réseau pour les requêtes à destination de ces pods.
 - Configure une politique permettant d'y accéder depuis l'intérieur ou l'extérieur du cluster.
@@ -223,7 +223,7 @@ Dans Kubernetes, un **service** est un objet qui :
 
 <!-- Un service k8s est en particulier adapté pour implémenter une architecture micro-service. -->
 
-L'ensemble des pods ciblés par un service est déterminé par un `selector`.
+L'ensemble des pods ciblés par un service est déterminé par un [`selector`](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors).
 
 Par exemple, considérons un backend de traitement d'image (*stateless*, c'est-à-dire ici sans base de données) qui s'exécute avec 3 replicas. Ces replicas sont interchangeables et les frontends ne se soucient pas du backend qu'ils utilisent. Bien que les pods réels qui composent l'ensemble `backend` puissent changer, les clients frontends ne devraient pas avoir besoin de le savoir, pas plus qu'ils ne doivent suivre eux-mêmes l'état de l'ensemble des backends.
 
@@ -232,20 +232,20 @@ L'abstraction du service permet ce découplage : les clients frontend s'addresse
 <!-- Paragraphe aussi présent en haut du cours network -->
 Les Services sont de trois types principaux :
 
-- `ClusterIP`: expose le service **sur une IP interne** au cluster.
+- [`ClusterIP`](https://kubernetes.io/docs/concepts/services-networking/service/#type-clusterip): expose le service **sur une IP interne** au cluster.
 
-- `NodePort`: expose le service depuis l'IP de **chacun des noeuds du cluster** en ouvrant un port directement sur le nœud, entre 30000 et 32767. Cela permet d'accéder aux pods internes répliqués. Comme l'IP est stable on peut faire pointer un DNS ou Loadbalancer classique dessus.
+- [`NodePort`](https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport): expose le service depuis l'IP de **chacun des noeuds du cluster** en ouvrant un port directement sur le nœud, entre 30000 et 32767. Cela permet d'accéder aux pods internes répliqués. Comme l'IP est stable on peut faire pointer un DNS ou Loadbalancer classique dessus.
 
-- `LoadBalancer`: expose le service en externe à l'aide d'un Loadbalancer de fournisseur de cloud. Les services NodePort et ClusterIP, vers lesquels le Loadbalancer est dirigé sont automatiquement créés.
+- [`LoadBalancer`](https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer): expose le service en externe à l'aide d'un Loadbalancer de fournisseur de cloud. Les services NodePort et ClusterIP, vers lesquels le Loadbalancer est dirigé sont automatiquement créés.
 
 ![](images/k8s-services.drawio.png)
 <!-- *Crédits à [Ahmet Alp Balkan](https://medium.com/@ahmetb) pour les schémas* -->
 
 Deux autres types plus avancés:
 
-- `ExternalName`: Un service `ExternalName`  est typiquement utilisé pour permettre l'accès à un service externe en le mappant à un nom DNS interne, facilitant ainsi la redirection des requêtes sans utiliser un proxy ou un load balancer. (https://stackoverflow.com/questions/54327697/kubernetes-externalname-services)
+- [`ExternalName`](https://kubernetes.io/docs/concepts/services-networking/service/#externalname): Un service `ExternalName` est typiquement utilisé pour permettre l'accès à un service externe en le mappant à un nom DNS interne, facilitant ainsi la redirection des requêtes sans utiliser un proxy ou un load balancer. (https://stackoverflow.com/questions/54327697/kubernetes-externalname-services)
 
-- `headless` (avec `ClusterIP: None`):  est utilisé pour permettre la découverte directe des pods via leur ip au sein d'un service. Ce mode est souvent utilisé pour des applications nécessitant une connexion directe entre instances, comme les bases de données distribuées ou data broker (kafka). (https://stackoverflow.com/questions/52707840/what-is-a-headless-service-what-does-it-do-accomplish-and-what-are-some-legiti)
+- [`headless`](https://kubernetes.io/docs/concepts/services-networking/headless-services/) (avec `ClusterIP: None`): est utilisé pour permettre la découverte directe des pods via leur ip au sein d'un service. Ce mode est souvent utilisé pour des applications nécessitant une connexion directe entre instances, comme les bases de données distribuées ou data broker (kafka). (https://stackoverflow.com/questions/52707840/what-is-a-headless-service-what-does-it-do-accomplish-and-what-are-some-legiti)
 
 ## Quelques ressources plus détaillées:
 
