@@ -1,6 +1,6 @@
 ---
 title: TP optionnel - Stratégies de déploiement
-sidebar_class_name: hidden
+draft: true
 ---
 
 ### Déployer notre application d'exemple (goprom) et la connecter à prometheus
