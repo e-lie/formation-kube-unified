@@ -2,7 +2,7 @@
 title: "Cours - Service mesh et Istio"
 description: "Guide Cours - Service mesh et Istio"
 sidebar:
-  order: 340
+  order: 320
 ---
 
 
