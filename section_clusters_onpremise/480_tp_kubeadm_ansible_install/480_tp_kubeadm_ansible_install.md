@@ -1,6 +1,7 @@
 ---
 title: TP optionnel - Installer un cluster multinoeuds avec Kubeadm et Ansible
 sidebar_class_name: hidden
+draft: true
 ---
 
 Dans ce TP nous allons utiliser des playbooks Ansible pour executer une installation Kubernetes via Kubeadm sur plusieurs machines.

@@ -1,5 +1,6 @@
 ---
-title: TP optionnel - Installer Cilium - observer et limiter le traffic 
+title: TP optionnel - Installer Cilium - observer et limiter le traffic
+draft: true
 ---
 
 Cilium est un des CNI les plus puissants avec Calico. Il permet notamment d'observer finement le traffic, le chiffrer et de le filtrer en temps réel au niveau 3,4 et 7 avec des Network Policies et autres règles avancées.

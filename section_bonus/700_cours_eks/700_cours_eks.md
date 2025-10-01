@@ -1,5 +1,6 @@
 ---
 title: Cours optionnel - Le cas de AWS EKS
+draft: true
 ---
 
 EKS (Elastic Kubernetes Service) est l'offre Kubernetes managée d'amazon AWS.

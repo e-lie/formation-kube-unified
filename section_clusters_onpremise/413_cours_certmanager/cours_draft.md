@@ -3,35 +3,17 @@ title: Cours - L'opérateur CertManager
 draft: true
 ---
 
-
-
 # Cours : cert-manager pour Kubernetes
 
 ## Introduction
 
-cert-manager est un contrôleur Kubernetes natif qui automatise la gestion et le renouvellement des certificats TLS. Il transforme la gestion des certificats en ressources Kubernetes déclaratives, éliminant ainsi les processus manuels fastidieux et les risques d'expiration de certificats.
-
-### Pourquoi cert-manager ?
-
-**Problèmes sans cert-manager :**
-- Processus manuel de génération de CSR (Certificate Signing Request)
-- Soumission manuelle aux autorités de certification
-- Surveillance manuelle des dates d'expiration
-- Renouvellement manuel et redéploiement
-- Risque d'oubli → expiration → interruption de service
-
-**Avantages avec cert-manager :**
-- Automatisation complète du cycle de vie des certificats
-- Renouvellement automatique avant expiration
-- Intégration native avec Kubernetes
-- Support de multiples sources de certificats
-- Gestion déclarative via YAML
+cert-manager est un contrôleur Kubernetes qui automatise la gestion et le renouvellement des certificats TLS. Il transforme la gestion des certificats en ressources Kubernetes déclaratives, éliminant ainsi les processus manuels fastidieux.
 
 ## Architecture générale
 
 cert-manager fonctionne selon un modèle de réconciliation continue typique de Kubernetes. Il surveille les ressources qu'il gère et s'assure que l'état réel correspond à l'état désiré.
 
-### Composants principaux
+<!-- ### Composants principaux
 
 **1. cert-manager Controller**
 Le contrôleur principal qui orchestre la création et le renouvellement des certificats.
@@ -40,7 +22,7 @@ Le contrôleur principal qui orchestre la création et le renouvellement des cer
 Valide et mute les ressources cert-manager lors de leur création/modification.
 
 **3. CA Injector**
-Injecte automatiquement les CA bundles dans les ressources qui en ont besoin (webhooks, API services).
+Injecte automatiquement les CA bundles dans les ressources qui en ont besoin (webhooks, API services). -->
 
 ## Les Custom Resource Definitions (CRDs)
 
@@ -87,7 +69,7 @@ spec:
           class: nginx
 ```
 
-**Types d'Issuers disponibles :**
+**Types d'Issuers disponibles (voir section plus loin):**
 - **ACME** (Let's Encrypt) : Certificats gratuits avec validation automatique
 - **CA** : Utilise une paire de clés CA existante
 - **Vault** : HashiCorp Vault PKI
@@ -147,13 +129,6 @@ spec:
     rotationPolicy: Always
 ```
 
-**Champs importants :**
-- `secretName` : Où le certificat sera stocké
-- `issuerRef` : Quel Issuer utiliser
-- `dnsNames` : Noms de domaine du certificat
-- `duration` : Durée de validité
-- `renewBefore` : Quand déclencher le renouvellement
-
 ### 3. CertificateRequest
 
 Ressource de bas niveau créée automatiquement par cert-manager lors d'une demande de Certificate. Elle contient le CSR brut.
@@ -197,7 +172,7 @@ spec:
     - example.com
 ```
 
-**Challenge** : Représente un défi de validation ACME (HTTP-01 ou DNS-01)
+**Challenge** : Représente un challenge de validation ACME (HTTP-01 ou DNS-01)
 ```yaml
 apiVersion: acme.cert-manager.io/v1
 kind: Challenge
@@ -215,7 +190,6 @@ spec:
         class: nginx
 ```
 
-## Flux de travail général
 
 Voici le processus complet de création d'un certificat :
 
@@ -323,148 +297,49 @@ spec:
       - name: example-gateway-tls
 ```
 
-## Cas d'usage avancés
-
 ### Certificats mTLS (Mutual TLS)
 
-Pour l'authentification mutuelle entre services :
+Le mTLS (Mutual TLS) est une méthode d'authentification bidirectionnelle où non seulement le client vérifie l'identité du serveur (comme dans TLS standard), mais le serveur vérifie également l'identité du client. C'est essentiel pour sécuriser les communications entre microservices dans une architecture moderne.
 
-```yaml
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: service-client-cert
-spec:
-  secretName: service-client-tls
-  issuerRef:
-    name: internal-ca
-    kind: ClusterIssuer
-  usages:
-    - digital signature
-    - key encipherment
-    - client auth  # Important pour mTLS
-  dnsNames:
-    - service-a.default.svc.cluster.local
-```
+On peut configurer les objets certificats pour les lier à certains objets services Kubernetes
 
-### Rotation automatique des certificats
+# Emetteurs de certificats pour CertManager
 
-cert-manager gère automatiquement la rotation :
+## Issuers Intégrés (In-tree)
 
-```yaml
-spec:
-  renewBefore: 720h  # Renouveler 30 jours avant expiration
-  privateKey:
-    rotationPolicy: Always  # Régénérer la clé à chaque renouvellement
-```
+cert-manager peut obtenir des certificats de diverses autorités de certification, notamment Let's Encrypt, HashiCorp Vault, et des PKI privées.
 
-### Certificats avec SAN multiples
+### 1. **ACME / Let's Encrypt**
+- Certificats gratuits et automatisés
+- Idéal pour les workloads publics
+- Renouvellement automatique tous les 90 jours
 
-Support de plusieurs types de Subject Alternative Names :
+### 2. **HashiCorp Vault**
+Vault est un magasin de secrets multi-usage qui peut signer des certificats pour votre infrastructure PKI. Configuration via plusieurs méthodes d'authentification :
+- **AppRole** : authentification basée sur des rôles
+- **Kubernetes Auth** : utilisation des Service Accounts Kubernetes
+- **JWT/OIDC** : pour les clusters avec OIDC activé
+- **Token** : authentification par token direct
 
-```yaml
-spec:
-  dnsNames:
-    - example.com
-    - "*.example.com"
-  ipAddresses:
-    - 192.168.1.1
-  uris:
-    - spiffe://cluster.local/ns/default/sa/myapp
-  emailAddresses:
-    - admin@example.com
-```
+### 3. **Venafi**
+- Solutions enterprise (TPP / TLS Protect Cloud)
+- Gestion centralisée des certificats
+- Conformité et audit avancés
 
-## Monitoring et debugging
+## Issuers Externes (External/Out-of-tree)
 
-### Vérifier l'état d'un Certificate
+Les issuers externes sont installés en déployant un pod supplémentaire dans votre cluster qui surveille les ressources CertificateRequest.
 
-```bash
-kubectl get certificate example-com-cert
-kubectl describe certificate example-com-cert
-```
+### 4. **AWS Private CA (AWS PCA)**
+AWS Private CA Issuer est un projet open source qui fait le pont entre AWS Private CA et cert-manager, permettant à cert-manager de signer des demandes de certificats via AWS PCA.
 
-### Vérifier les CertificateRequests
+### 5. **Google Cloud CA Service**
+- Intégration native avec Google Cloud
+- Gestion centralisée pour GKE
 
-```bash
-kubectl get certificaterequest
-kubectl describe certificaterequest example-com-cert-xxxxx
-```
+### 7. **Cloudflare Origin CA**
+origin-ca-issuer est utilisé pour demander des certificats signés par Cloudflare Origin CA afin d'activer TLS entre le edge Cloudflare et vos workloads Kubernetes
+- Idéal si vous utilisez Cloudflare comme CDN
+- Certificats gratuits valides 15 ans
 
-### Logs du contrôleur
-
-```bash
-kubectl logs -n cert-manager deploy/cert-manager
-```
-
-### Événements
-
-```bash
-kubectl get events --sort-by='.lastTimestamp' | grep cert-manager
-```
-
-## Bonnes pratiques
-
-### 1. Utiliser ClusterIssuer pour la production
-Évite la duplication de configuration dans chaque namespace.
-
-### 2. Configurer renewBefore approprié
-Recommandation : 1/3 de la durée du certificat
-- Certificat de 90 jours → renewBefore: 30 jours (720h)
-
-### 3. Séparer staging et production
-Utilisez l'environnement staging de Let's Encrypt pour les tests afin d'éviter les limites de taux.
-
-### 4. Surveiller les expirations
-Même avec cert-manager, mettez en place des alertes de secours.
-
-### 5. Utiliser des ServiceAccounts dédiés
-Pour les issuers externes (Vault, AWS PCA), utilisez des ServiceAccounts avec permissions minimales.
-
-### 6. Backup des certificats sensibles
-Bien que cert-manager les renouvelle, sauvegardez les certificats critiques.
-
-### 7. Documenter vos Issuers
-Ajoutez des annotations et labels pour identifier la source et l'usage.
-
-## Dépannage courant
-
-### Certificat non créé
-- Vérifier que l'Issuer existe et est Ready
-- Vérifier les événements du Certificate
-- Vérifier les logs du contrôleur
-
-### Challenge ACME échoue
-- HTTP-01 : Vérifier que l'Ingress est accessible publiquement
-- DNS-01 : Vérifier les credentials API DNS
-- Vérifier les limites de taux Let's Encrypt
-
-### Certificat non renouvelé
-- Vérifier `renewBefore` vs `duration`
-- Vérifier que le contrôleur fonctionne
-- Vérifier les conditions du Certificate
-
-## Installation
-
-```bash
-# Via kubectl
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
-
-# Via Helm
-helm repo add jetstack https://charts.jetstack.io
-helm repo update
-helm install cert-manager jetstack/cert-manager \
-  --namespace cert-manager \
-  --create-namespace \
-  --set installCRDs=true
-```
-
-## Conclusion
-
-cert-manager transforme la gestion des certificats TLS d'une tâche manuelle et risquée en un processus automatisé et fiable. En comprenant ses CRDs et son fonctionnement, vous pouvez sécuriser efficacement vos workloads Kubernetes tout en réduisant drastiquement la charge opérationnelle.
-
-La clé du succès avec cert-manager réside dans :
-- Une bonne compréhension du flux Certificate → CertificateRequest → Secret
-- Le choix approprié d'Issuer pour votre contexte
-- Une configuration de renouvellement préventive
-- Un monitoring approprié pour détecter les problèmes rapidement
+et d'autres...
