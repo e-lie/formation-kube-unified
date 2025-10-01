@@ -10,92 +10,9 @@ Dans ce TP, nous allons améliorer notre déploiement MonsterStack en remplaçan
 
 Ce qui illustrera un cas classique de déploiement stateful simple.
 
-## Architecture cible
+## Architecture
 
-### Vue d'ensemble de l'application
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Frontend x3   │────▶│  ImageBackend   │────▶│  Redis Cluster  │
-│   (Deployment)  │     │   (Deployment)  │     │  (StatefulSet)  │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                           │
-                                                  ┌────────┼────────┐
-                                                  │        │        │
-                                              redis-0  redis-1  redis-2
-                                              (master)  (slave)  (slave)
-```
-
-### Architecture détaillée du cluster Redis
-
-```mermaid
-graph TB
-    subgraph "Namespace: default"
-        subgraph "StatefulSet: redis"
-            R0[redis-0<br/>📦 Pod<br/>🔑 Master<br/>📂 data-redis-0]
-            R1[redis-1<br/>📦 Pod<br/>📖 Slave<br/>📂 data-redis-1]
-            R2[redis-2<br/>📦 Pod<br/>📖 Slave<br/>📂 data-redis-2]
-        end
-        
-        subgraph "Services"
-            SH[redis-headless<br/>🌐 ClusterIP: None<br/>🔍 Discovery DNS]
-            SM[redis<br/>🌐 ClusterIP<br/>✍️ Write Master]
-            SR[redis-replicas<br/>🌐 ClusterIP<br/>📖 Read All]
-        end
-        
-        subgraph "DNS Resolution"
-            DNS1[redis-0.redis-headless<br/>🏷️ Stable DNS]
-            DNS2[redis-1.redis-headless<br/>🏷️ Stable DNS]
-            DNS3[redis-2.redis-headless<br/>🏷️ Stable DNS]
-        end
-        
-        subgraph "Storage"
-            PVC0[data-redis-0<br/>💾 PVC 1Gi]
-            PVC1[data-redis-1<br/>💾 PVC 1Gi]
-            PVC2[data-redis-2<br/>💾 PVC 1Gi]
-        end
-    end
-    
-    subgraph "Application Layer"
-        APP[MonsterStack App<br/>🖥️ Frontend + ImageBackend]
-    end
-    
-    %% Connections
-    SH -.-> R0
-    SH -.-> R1
-    SH -.-> R2
-    
-    SM --> R0
-    SR --> R0
-    SR --> R1
-    SR --> R2
-    
-    DNS1 -.-> R0
-    DNS2 -.-> R1
-    DNS3 -.-> R2
-    
-    R0 --- PVC0
-    R1 --- PVC1
-    R2 --- PVC2
-    
-    R1 -.->|replicaof| DNS1
-    R2 -.->|replicaof| DNS1
-    
-    APP -->|writes| SM
-    APP -.->|reads| SR
-    
-    classDef master fill:#ff9999,stroke:#333,stroke-width:2px
-    classDef slave fill:#99ccff,stroke:#333,stroke-width:2px
-    classDef service fill:#99ff99,stroke:#333,stroke-width:2px
-    classDef storage fill:#ffcc99,stroke:#333,stroke-width:2px
-    classDef app fill:#cc99ff,stroke:#333,stroke-width:2px
-    
-    class R0 master
-    class R1,R2 slave
-    class SH,SM,SR service
-    class PVC0,PVC1,PVC2 storage
-    class APP app
-```
+![Architecture Redis StatefulSet](images/redis-architecture.png)
 
 ## Comprendre les StatefulSets
 
