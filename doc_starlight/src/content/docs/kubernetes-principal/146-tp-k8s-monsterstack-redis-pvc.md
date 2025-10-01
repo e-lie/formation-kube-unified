@@ -3,6 +3,7 @@ title: "TP - Ajouter une persistance à Redis avec un volume"
 description: "Guide TP - Ajouter une persistance à Redis avec un volume"
 sidebar:
   order: 146
+draft: false
 ---
 
 

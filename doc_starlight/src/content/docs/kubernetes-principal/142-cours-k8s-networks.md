@@ -3,6 +3,7 @@ title: "Cours - Le réseau dans Kubernetes"
 description: "Guide Cours - Le réseau dans Kubernetes"
 sidebar:
   order: 142
+draft: false
 ---
 
 

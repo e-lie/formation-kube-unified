@@ -3,6 +3,7 @@ title: "Cours optionnel - Problématiques de securité Kubernetes"
 description: "Guide Cours optionnel - Problématiques de securité Kubernetes"
 sidebar:
   order: 420
+draft: false
 ---
 
 

@@ -3,6 +3,7 @@ title: "Cours optionnel - Principes de conception et architecture détaillée de
 description: "Guide Cours optionnel - Principes de conception et architecture détaillée de Kubernetes"
 sidebar:
   order: 405
+draft: false
 ---
 
 

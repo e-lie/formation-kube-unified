@@ -3,6 +3,7 @@ title: "TP - Déployer Wordpress avec Helm"
 description: "Guide TP - Déployer Wordpress avec Helm"
 sidebar:
   order: 154
+draft: false
 ---
 
 

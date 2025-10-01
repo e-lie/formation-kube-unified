@@ -3,6 +3,7 @@ title: "Cours 6 - Méthodes pour installer des applications Kubernetes"
 description: "Guide Cours 6 - Méthodes pour installer des applications Kubernetes"
 sidebar:
   order: 150
+draft: false
 ---
 
 

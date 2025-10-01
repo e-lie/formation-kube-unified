@@ -1,8 +1,9 @@
 ---
-title: "\"cours istio traffic routing fr\""
-description: "Guide \"cours istio traffic routing fr\""
+title: "cours istio traffic routing fr"
+description: "Guide cours istio traffic routing fr"
 sidebar:
   order: 630
+draft: true
 ---
 
 

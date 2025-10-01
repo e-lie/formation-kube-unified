@@ -1,6 +1,6 @@
 ---
-title: "\"Les resources kubernetes exotiques plus avancées\""
-description: "Guide \"Les resources kubernetes exotiques plus avancées\""
+title: "Les resources kubernetes exotiques plus avancées"
+description: "Guide Les resources kubernetes exotiques plus avancées"
 sidebar:
   order: 220
 ---

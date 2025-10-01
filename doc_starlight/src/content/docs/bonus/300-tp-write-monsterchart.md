@@ -3,6 +3,7 @@ title: "TP optionnel - Écrire un chart pour notre application monsterstack"
 description: "Guide TP optionnel - Écrire un chart pour notre application monsterstack"
 sidebar:
   order: 300
+draft: false
 ---
 
 

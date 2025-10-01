@@ -1,8 +1,9 @@
 ---
-title: "\"TP - Installer l'operateur Certmanager pour les certificats HTTPS\""
-description: "Guide \"TP - Installer l'operateur Certmanager pour les certificats HTTPS\""
+title: "TP - Installer l'operateur Certmanager pour les certificats HTTPS"
+description: "Guide TP - Installer l'operateur Certmanager pour les certificats HTTPS"
 sidebar:
   order: 415
+draft: false
 ---
 
 

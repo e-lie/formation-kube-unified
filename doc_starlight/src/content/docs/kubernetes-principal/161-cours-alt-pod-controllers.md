@@ -3,6 +3,7 @@ title: "Cours - Les différents contrôleurs pour les pods"
 description: "Guide Cours - Les différents contrôleurs pour les pods"
 sidebar:
   order: 161
+draft: false
 ---
 
 

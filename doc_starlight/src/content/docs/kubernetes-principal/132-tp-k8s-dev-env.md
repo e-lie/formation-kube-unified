@@ -3,6 +3,7 @@ title: "TP - Développer directement dans un cluster Kubernetes"
 description: "Guide TP - Développer directement dans un cluster Kubernetes"
 sidebar:
   order: 132
+draft: false
 ---
 
 

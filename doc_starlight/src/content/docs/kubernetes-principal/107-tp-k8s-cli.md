@@ -3,6 +3,7 @@ title: "TP - Découvrir la CLI kubectl et déployer une application"
 description: "Guide TP - Découvrir la CLI kubectl et déployer une application"
 sidebar:
   order: 107
+draft: false
 ---
 
 

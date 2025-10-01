@@ -135,8 +135,24 @@ function processMarkdownContent(content, filename, sourceDirName = '', sectionNa
       const colonIndex = line.indexOf(':');
       if (colonIndex > 0) {
         const key = line.slice(0, colonIndex).trim();
-        const value = line.slice(colonIndex + 1).trim();
-        existingFrontmatter[key] = isNaN(value) ? value : Number(value);
+        let value = line.slice(colonIndex + 1).trim();
+        
+        // Nettoyer les guillemets
+        if ((value.startsWith('"') && value.endsWith('"')) || 
+            (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        
+        // Parser les différents types de valeurs
+        if (value === 'true') {
+          existingFrontmatter[key] = true;
+        } else if (value === 'false') {
+          existingFrontmatter[key] = false;
+        } else if (!isNaN(value) && value !== '') {
+          existingFrontmatter[key] = Number(value);
+        } else {
+          existingFrontmatter[key] = value;
+        }
       }
     });
   }
@@ -176,6 +192,11 @@ function processMarkdownContent(content, filename, sourceDirName = '', sectionNa
       order: orderNumber
     }
   };
+  
+  // Préserver le champ draft s'il existe
+  if (existingFrontmatter.draft !== undefined) {
+    starlightFrontmatter.draft = existingFrontmatter.draft;
+  }
   
   // Créer le nouveau contenu avec le frontmatter Starlight
   const frontmatterYaml = Object.entries(starlightFrontmatter)

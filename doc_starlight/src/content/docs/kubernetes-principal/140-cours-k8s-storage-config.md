@@ -3,6 +3,7 @@ title: "Cours - Les volumes pour le stockage persistent et la configuration"
 description: "Guide Cours - Les volumes pour le stockage persistent et la configuration"
 sidebar:
   order: 140
+draft: false
 ---
 
 

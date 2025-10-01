@@ -3,6 +3,7 @@ title: "TP - Paramétrer monsterstack pour plusieurs environnements avec Kustomi
 description: "Guide TP - Paramétrer monsterstack pour plusieurs environnements avec Kustomize"
 sidebar:
   order: 158
+draft: false
 ---
 
 

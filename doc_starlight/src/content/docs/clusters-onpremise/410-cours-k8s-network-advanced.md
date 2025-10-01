@@ -3,6 +3,7 @@ title: "Cours optionnel - Réseau Kubernetes avancé"
 description: "Guide Cours optionnel - Réseau Kubernetes avancé"
 sidebar:
   order: 410
+draft: false
 ---
 
 
