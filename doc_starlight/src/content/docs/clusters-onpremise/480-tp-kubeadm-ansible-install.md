@@ -3,6 +3,7 @@ title: "TP optionnel - Installer un cluster multinoeuds avec Kubeadm et Ansible"
 description: "Guide TP optionnel - Installer un cluster multinoeuds avec Kubeadm et Ansible"
 sidebar:
   order: 480
+draft: true
 ---
 
 

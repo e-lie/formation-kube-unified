@@ -3,6 +3,7 @@ title: "TP optionnel - Installer Cilium - observer et limiter le traffic"
 description: "Guide TP optionnel - Installer Cilium - observer et limiter le traffic"
 sidebar:
   order: 412
+draft: true
 ---
 
 

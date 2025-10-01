@@ -3,6 +3,7 @@ title: "Cours optionnel - Le cas de AWS EKS"
 description: "Guide Cours optionnel - Le cas de AWS EKS"
 sidebar:
   order: 710
+draft: true
 ---
 
 
