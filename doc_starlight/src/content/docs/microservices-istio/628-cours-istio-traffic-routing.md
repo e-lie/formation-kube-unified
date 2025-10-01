@@ -1,7 +1,6 @@
 ---
 title: "\"cours istio traffic routing eng\""
 description: "Guide \"cours istio traffic routing eng\""
-draft: true
 sidebar:
   order: 628
 ---
