@@ -1,0 +1,94 @@
+# StatefulSet Redis
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: default
+spec:
+  serviceName: redis-headless
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      initContainers:
+        - name: config
+          image: redis:7.2-alpine
+          command:
+            - sh
+            - -c
+            - |
+              set -ex
+              # Copier la config appropriée selon l'ordinal du pod
+              if [ "$(hostname)" = "redis-0" ]; then
+                echo "Initializing as MASTER"
+                cp /mnt/config-map/master.conf /etc/redis/redis.conf
+              else
+                echo "Initializing as REPLICA"
+                cp /mnt/config-map/slave.conf /etc/redis/redis.conf
+              fi
+              
+              echo "Configuration copied successfully"
+              cat /etc/redis/redis.conf
+          volumeMounts:
+            - name: redis-config
+              mountPath: /mnt/config-map
+            - name: config
+              mountPath: /etc/redis/
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          ports:
+            - containerPort: 6379
+              name: redis
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/redis
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli ping | grep PONG
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+        - name: config
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+        # storageClassName: standard  # Décommentez et ajustez selon votre cluster

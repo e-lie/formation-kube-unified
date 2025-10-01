@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: monsterstack
+spec:
+  ports:
+    - port: 5000
+  selector:
+    app: monsterstack
+    partie: frontend
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: monsterstack
+spec:
+  selector:
+    matchLabels:
+      app: monsterstack
+      partie: frontend
+  strategy:
+    type: Recreate
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app: monsterstack
+        partie: frontend
+    spec:
+      imagePullSecrets:
+        - name: registry-credential # registry login secret to create in the cluster with
+        # kubectl create secret docker-registry registry-credential --docker-server=<registryhost> --docker-username=<username> --docker-password=<thepasspword>
+      containers:
+      - name: frontend
+        image: registry.kluster.ptych.net/frontend
+        ports:
+        - containerPort: 5000
+        livenessProbe:
+          tcpSocket:
+            port: 5000
+          initialDelaySeconds: 1
+          periodSeconds: 5
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+            httpHeaders:
+            - name: Accept
+              value: application/json
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+          periodSeconds: 10
+          failureThreshold: 3
+        env:
+        - name: CONTEXT
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config           # The ConfigMap this value comes from.
+              key: CONTEXT
+        - name: REDIS_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: REDIS_DOMAIN
+        - name: IMAGEBACKEND_DOMAIN
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: IMAGEBACKEND_DOMAIN
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "300m"
+            memory: "200Mi"

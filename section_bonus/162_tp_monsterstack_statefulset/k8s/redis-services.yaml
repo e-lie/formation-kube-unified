@@ -1,0 +1,73 @@
+# Service Headless pour la découverte des pods
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  namespace: default
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis
+
+---
+# Service pour accéder au master (redis-0)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: default
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis
+    statefulset.kubernetes.io/pod-name: redis-0
+
+---
+# Service pour accéder aux replicas en lecture
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-replicas
+  namespace: default
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis
+
+---
+# Service de compatibilité (pour l'application existante qui cherche "redis")
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: default
+  labels:
+    app: redis
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis
+    statefulset.kubernetes.io/pod-name: redis-0

@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: default
+data:
+  master.conf: |
+    # Configuration du Master Redis
+    
+    # RÉSEAU
+    bind 0.0.0.0                    # Écouter sur toutes les interfaces (nécessaire dans K8s)
+    protected-mode no               # Désactiver le mode protégé (pas de password ici)
+    port 6379                       # Port standard Redis
+    tcp-backlog 511                 # Taille de la queue des connexions TCP
+    timeout 0                       # Pas de timeout pour les clients inactifs (0 = désactivé)
+    tcp-keepalive 300               # Envoyer des TCP keepalive toutes les 300 secondes
+    
+    # GÉNÉRAL
+    daemonize no                    # Ne pas lancer en daemon (requis pour Docker/K8s)
+    supervised no                   # Pas de supervision par init system
+    loglevel notice                 # Niveau de log (debug, verbose, notice, warning)
+    databases 16                    # Nombre de bases de données (0-15)
+    
+    # PERSISTANCE (SNAPSHOTTING)
+    save 900 1                      # Sauvegarder si au moins 1 clé modifiée en 15 min
+    save 300 10                     # Sauvegarder si au moins 10 clés modifiées en 5 min
+    save 60 10000                   # Sauvegarder si au moins 10000 clés modifiées en 1 min
+    stop-writes-on-bgsave-error yes # Arrêter les écritures si le snapshot échoue
+    rdbcompression yes              # Compresser les dumps RDB
+    rdbchecksum yes                 # Vérifier l'intégrité des fichiers RDB
+    dbfilename dump.rdb             # Nom du fichier de snapshot
+    dir /data                       # Répertoire où stocker les données (volume persistant)
+    
+    # GESTION MÉMOIRE
+    maxmemory 256mb                 # Limite mémoire maximale
+    maxmemory-policy allkeys-lru    # Éviction LRU sur toutes les clés quand mémoire pleine
+
+  slave.conf: |
+    # Configuration des Replicas Redis
+    
+    # RÉSEAU
+    bind 0.0.0.0                    # Écouter sur toutes les interfaces
+    protected-mode no               # Désactiver le mode protégé
+    port 6379                       # Port standard Redis
+    tcp-backlog 511                 # Taille de la queue des connexions TCP
+    timeout 0                       # Pas de timeout pour les clients inactifs
+    tcp-keepalive 300               # Envoyer des TCP keepalive toutes les 300 secondes
+    
+    # GÉNÉRAL
+    daemonize no                    # Ne pas lancer en daemon (requis pour Docker/K8s)
+    supervised no                   # Pas de supervision par init system
+    loglevel notice                 # Niveau de log
+    databases 16                    # Nombre de bases de données
+    
+    # RÉPLICATION
+    # Se connecter au master via le service headless (DNS stable)
+    replicaof redis-0.redis-headless 6379
+    slave-read-only yes             # Replicas en lecture seule (recommandé)
+    
+    # PERSISTANCE
+    dir /data                       # Répertoire pour les données répliquées
+    
+    # GESTION MÉMOIRE
+    maxmemory 256mb                 # Limite mémoire maximale
+    maxmemory-policy allkeys-lru    # Éviction LRU sur toutes les clés

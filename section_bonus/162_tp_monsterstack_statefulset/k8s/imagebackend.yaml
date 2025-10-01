@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: imagebackend
+  labels:
+    app: monsterstack
+spec:
+  ports:
+    - port: 8080
+  selector:
+    app: monsterstack 
+    partie: imagebackend
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: imagebackend 
+  labels:
+    app: monsterstack
+spec:
+  selector:
+    matchLabels:
+      app: monsterstack
+      partie: imagebackend
+  strategy:
+    type: Recreate
+  replicas: 5
+  template:
+    metadata:
+      labels:
+        app: monsterstack
+        partie: imagebackend
+    spec:
+      containers:
+      - image: amouat/dnmonster:1.0
+        name: imagebackend
+        ports:
+        - containerPort: 8080
+          name: imagebackend
+        env:
+        - name: REDIS_HOST
+          value: "redis-master"  # Utiliser le service master pour les écritures
+        - name: REDIS_PORT
+          value: "6379"
