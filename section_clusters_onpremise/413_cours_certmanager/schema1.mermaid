@@ -1,0 +1,79 @@
+flowchart TB
+    subgraph user["👤 Utilisateur"]
+        create[Crée une ressource<br/>Certificate]
+    end
+    
+    subgraph k8s["🎯 Cluster Kubernetes"]
+        subgraph crds["📋 Custom Resources"]
+            cert[Certificate<br/>example.com]
+            certreq[CertificateRequest<br/>contient le CSR]
+            issuer[Issuer/ClusterIssuer<br/>letsencrypt-prod]
+            order[Order<br/>commande ACME]
+            challenge[Challenge<br/>validation HTTP/DNS]
+        end
+        
+        subgraph controllers["⚙️ cert-manager Controllers"]
+            certctrl[Certificate Controller]
+            issuerctrl[Issuer Controller]
+            challengectrl[Challenge Controller]
+            orderctrl[Order Controller]
+        end
+        
+        subgraph k8sres["📦 Ressources K8s"]
+            secret[Secret<br/>example-com-tls<br/>contient cert + key]
+            ingress[Ingress<br/>utilise le Secret]
+            svc[Service]
+            pod[Pods]
+        end
+    end
+    
+    subgraph external["🌐 Systèmes Externes"]
+        ca[Autorité de Certification<br/>Let's Encrypt/Vault/AWS PCA]
+    end
+    
+    subgraph validation["✅ Validation"]
+        http01[Challenge HTTP-01<br/>Fichier web temporaire]
+        dns01[Challenge DNS-01<br/>Enregistrement TXT]
+    end
+    
+    create --> cert
+    cert -.1 Observe.-> certctrl
+    certctrl -.2 Génère clé privée.-> certctrl
+    certctrl -.3 Crée.-> certreq
+    certreq -.4 Référence.-> issuer
+    certctrl -.5 Observe.-> issuerctrl
+    
+    issuerctrl -.6 Type ACME.-> orderctrl
+    orderctrl -.7 Crée.-> order
+    order -.8 Nécessite validation.-> challengectrl
+    challengectrl -.9 Crée.-> challenge
+    
+    challenge -.10a HTTP-01.-> http01
+    challenge -.10b DNS-01.-> dns01
+    
+    http01 -.11a Expose via.-> ingress
+    dns01 -.11b Crée TXT.-> external
+    
+    challengectrl -.12 Validation OK.-> orderctrl
+    orderctrl -.13 Soumet CSR.-> ca
+    ca -.14 Retourne certificat signé.-> issuerctrl
+    issuerctrl -.15 Met à jour.-> certreq
+    certctrl -.16 Stocke cert+key.-> secret
+    
+    secret --> ingress
+    ingress --> svc
+    svc --> pod
+    
+    certctrl -.Surveille expiration et renouvelle.-> cert
+    
+    style cert fill:#326CE5,color:#fff
+    style certreq fill:#326CE5,color:#fff
+    style issuer fill:#326CE5,color:#fff
+    style order fill:#FFB84D,color:#000
+    style challenge fill:#FFB84D,color:#000
+    style secret fill:#4CAF50,color:#fff
+    style ca fill:#9C27B0,color:#fff
+    style certctrl fill:#FF6B6B,color:#fff
+    style issuerctrl fill:#FF6B6B,color:#fff
+    style challengectrl fill:#FF6B6B,color:#fff
+    style orderctrl fill:#FF6B6B,color:#fff
