@@ -1,6 +1,7 @@
 ---
 title: "cours istio traffic routing fr"
 sidebar_class_name: hidden
+draft: true
 ---
 
 ## Gestion du trafic

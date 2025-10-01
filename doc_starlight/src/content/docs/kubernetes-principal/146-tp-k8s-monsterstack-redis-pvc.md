@@ -43,10 +43,10 @@ Pour récupérer les données on peut:
 - récupérer les données à la main sur le disque/volume réseau indépendamment de kubernetes
 - utiliser la nouvelle fonctionnalité de clone de volume
 
-Lah correction de cette partie se trouve dans la branche `tp_monsterstack_correction_pvc` :
 
-`git clone -b tp_monsterstack_correction_pvc https://github.com/Uptime-Formation/corrections_tp.git tp_monsterstack_correction_pvc`
+## Correction du TP
 
+La correction se trouve dans le dossier `146_tp_k8s_monsterstack_redis_pvc` du dépot de la formation (https://github.com/e-lie/formation-kube-unified)
 
 <!-- - https://cloud.google.com/kubernetes-engine/docs/tutorials/persistent-disk/
 - https://github.com/GoogleCloudPlatform/kubernetes-workshops/blob/master/state/local.md

@@ -1,6 +1,7 @@
 ---
 title: "cours istio traffic routing eng"
 sidebar_class_name: hidden
+draft: true
 ---
 
 ## Traffic Management

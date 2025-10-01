@@ -6,7 +6,9 @@ draft: false
 
 ## Une application d'exemple en 3 parties
 
-Récupérez le projet de base en clonant la correction du TP2: `git clone -b tp_monsterstack_base https://github.com/Uptime-Formation/corrections_tp.git tp3`
+Récupérez le projet de base en clonant le dépot global de la formation :
+
+`git clone https://github.com/e-lie/formation-kube-unified.git` et en copian le dossier `128_tp_monsterstack_base` sur le bureau en tp3
 
 Ce TP va consister à créer des objets Kubernetes pour déployer une application microservices (plutôt simple) : `monsterstack`.
 Elle est composée :
@@ -18,7 +20,7 @@ Elle est composée :
 ## Etudions le code et testons avec `docker-compose`
 
 - Le frontend est une application web python (flask) qui propose un petit formulaire et lance une requete sur le backend pour chercher une image et l'afficher.
-- Il est construit à partir du `Dockerfile` présent dans le dossier `TP3`.
+- Il est construit à partir du `Dockerfile` présent dans le dossier `tp3`.
 - Le fichier `docker-compose.yml` est utile pour faire tourner les trois services de l'application dans docker rapidement (plus simple que kubernetes)
 
 Pour lancer l'application il suffit d'exécuter par exemple: `docker compose up -d`
@@ -350,4 +352,4 @@ Documentation : https://kubernetes.io/docs/tasks/configure-pod-container/assign-
 
 ## Correction du TP
 
-Le dépôt Git de la correction de ce TP est accessible ici : `git clone -b tp_monsterstack_final https://github.com/Uptime-Formation/corrections_tp.git`
+La correction se trouve dans le dossier `130_tp_k8s_monsterstack` du dépot de la formation (https://github.com/e-lie/formation-kube-unified)

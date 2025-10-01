@@ -119,3 +119,7 @@ envFrom:
 Cette approche injecte automatiquement toutes les clés de la ConfigMap comme variables d'environnement.
 
 Documentation officielle : https://kubernetes.io/docs/concepts/configuration/configmap/
+
+## Correction du TP
+
+La correction se trouve dans le dossier `146_tp_k8s_monsterstack_redis_pvc` du dépot de la formation (https://github.com/e-lie/formation-kube-unified)

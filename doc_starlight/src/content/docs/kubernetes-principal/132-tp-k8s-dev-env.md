@@ -133,4 +133,4 @@ Pour l'usage avec Helm, voir le TP Helm.
 
 ## Correction du TP
 
-Le dépôt Git de la correction de ce TP est accessible ici : `git clone -b tp_monsterstack_final https://github.com/Uptime-Formation/corrections_tp.git`
+La correction se trouve dans le dossier `132_tp_k8s_dev_env` du dépot de la formation (https://github.com/e-lie/formation-kube-unified)

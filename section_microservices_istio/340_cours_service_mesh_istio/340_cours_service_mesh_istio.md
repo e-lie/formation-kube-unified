@@ -82,9 +82,9 @@ Les CRDs de l'API Gateway officiel doivent être installés indépendament de Is
 
 ### Ambient mesh architecture
 
-L'architecture classique de Istio avec des proxies pour chaque pod est un peu lourde à mettre en oeuvres et peut interfèrer avec d'autres solution kubernetes.
+L'architecture classique de Istio avec des proxies pour chaque pod est un peu lourde à mettre en oeuvre et peut interfèrer avec d'autres solutions kubernetes.
 
-Istio développe une nouvelle architecture appelée ambient basée sur des agents déployés sur chaque noeuds du cluster. Elle est encore alpha mais promet un usage plus simple et économe de Istio dans un futur proche.
+Istio développe une nouvelle architecture appelée ambient mesh, basée sur des agents déployés sur chaque noeuds du cluster. Elle est encore alpha mais promet un usage plus simple et économe de Istio dans un futur proche.
 
 
 <!-- ## Essayer Istio
