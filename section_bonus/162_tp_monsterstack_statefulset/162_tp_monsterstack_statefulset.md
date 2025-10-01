@@ -99,9 +99,10 @@ data:
 ```
 
 **En résumé :**
-- Deux configurations : une pour le master, une pour les slaves
-- Le master (redis-0) a la configuration de persistance activée
-- Les slaves pointent vers `redis-0.redis-headless` pour la réplication
+- **Deux configurations distinctes** : Une pour le master (`master.conf`) et une pour les slaves (`slave.conf`)
+- **Configuration master** : Active la persistance RDB avec sauvegarde automatique (`save 900 1`, `save 300 10`, etc.) et stockage dans `/data`
+- **Configuration slaves** : Contient `replicaof redis-0.redis-headless 6379` pour se connecter automatiquement au master et `slave-read-only yes` pour empêcher les écritures
+- **Gestion dynamique** : L'initContainer choisit automatiquement la bonne configuration selon le nom du pod (redis-0 = master, autres = slaves)
 
 ## Créer les Services
 
@@ -165,9 +166,9 @@ spec:
 ```
 
 **Explications de nos services :**
-- `redis-headless` : Service headless pour DNS stable (redis-0.redis-headless, redis-1.redis-headless, etc.)
-- `redis` : Pointe uniquement vers redis-0 (master) pour les écritures - nommé ainsi pour compatibilité avec l'application existante
-- `redis-replicas` : Load balance sur tous les pods pour les lectures
+- **`redis-headless`** : Service headless (`clusterIP: None`) qui permet la découverte DNS. Chaque pod Redis a son propre nom DNS stable (redis-0.redis-headless, redis-1.redis-headless, etc.). Essentiel pour la réplication car les slaves doivent pouvoir contacter directement le master par son nom DNS.
+- **`redis`** : Service principal qui pointe uniquement vers redis-0 (master) via le sélecteur `statefulset.kubernetes.io/pod-name: redis-0`. Nommé simplement "redis" pour assurer la compatibilité avec l'application existante du TP 147. Toutes les écritures passent par ce service.
+- **`redis-replicas`** : Service qui load-balance sur TOUS les pods Redis (master + slaves) via le sélecteur `app: redis`. Utile pour distribuer les lectures sur l'ensemble du cluster et améliorer les performances.
 
 ## Créer le StatefulSet
 
@@ -262,9 +263,10 @@ spec:
 ```
 
 **Quelques précisions sur le code:**
-- `initContainer` : Configure le pod selon son ordinal (redis-0 = master, autres = slaves)
-- `volumeClaimTemplates` : Crée un PVC unique pour chaque pod
-- Les probes vérifient la santé de Redis
+- **`initContainer`** : Conteneur d'initialisation qui s'exécute avant Redis. Il examine le hostname du pod (`hostname` = redis-0, redis-1, etc.) et copie la configuration appropriée (master.conf pour redis-0, slave.conf pour les autres) dans un volume partagé que le conteneur principal utilisera.
+- **`volumeClaimTemplates`** : Template qui crée automatiquement un PersistentVolumeClaim (PVC) unique pour chaque pod du StatefulSet. Contrairement aux Deployments, chaque pod garde son propre stockage même après redémarrage, garantissant la persistance des données.
+- **`serviceName: redis-headless`** : Relie le StatefulSet au service headless pour activer les noms DNS stables.
+- **Probes de santé** : `livenessProbe` (TCP) vérifie que Redis répond, `readinessProbe` (redis-cli ping) s'assure que Redis est opérationnel avant de recevoir du trafic.
 
 ## Mettre à jour l'application
 
@@ -376,51 +378,10 @@ kubectl scale statefulset redis --replicas=3
 kubectl get pods -l app=redis -w
 ```
 
-## Points d'attention
-
-### Avantages du StatefulSet pour Redis
-
-1. **Identité stable** : redis-0 est toujours le master
-2. **Persistance** : Chaque pod a son propre volume
-3. **Ordre** : Démarrage et arrêt ordonnés
-4. **DNS stable** : Chaque pod a un nom DNS prévisible
-
 ### Limitations et considérations
 
 1. **Failover manuel** : Si redis-0 tombe, pas de promotion automatique
-2. **Split-brain** : Risque si le réseau se partitionne
 3. **Performance** : Les slaves sont en lecture seule
 
-### Pour aller plus loin
 
-1. **Redis Sentinel** : Pour le failover automatique
-2. **Redis Cluster** : Pour le sharding horizontal
-3. **Operators** : Redis Operator pour gestion avancée
-4. **Monitoring** : Prometheus + Redis Exporter
-
-## Exercices supplémentaires
-
-1. **Backup/Restore** : Implémenter une stratégie de sauvegarde
-2. **Monitoring** : Ajouter des métriques Prometheus
-3. **Sécurité** : Activer l'authentification Redis
-4. **Performance** : Configurer la persistence AOF vs RDB
-
-## Nettoyage
-
-```bash
-# Supprimer toutes les ressources
-kubectl delete -f .
-
-# Supprimer les PVC
-kubectl delete pvc -l app=redis
-```
-
-## Conclusion
-
-Dans ce TP, vous avez appris à :
-- Utiliser les StatefulSets pour des applications stateful
-- Configurer Redis en mode réplication master/slave
-- Gérer le stockage persistant avec les volumeClaimTemplates
-- Utiliser les services headless pour la découverte
-
-Les StatefulSets sont essentiels pour les applications qui nécessitent une identité stable, du stockage persistant et un ordre de déploiement, comme les bases de données et les systèmes de cache distribués.
+On pourrait installer un opérateur Redis pour avoir une solution plus avancée. Il faudrait également se préocuper du monitoring et backup de ce Redis
