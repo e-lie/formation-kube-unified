@@ -3,7 +3,6 @@ title: "TP optionnel - Stratégies de déploiement"
 description: "Guide TP optionnel - Stratégies de déploiement"
 sidebar:
   order: 322
-draft: true
 ---
 
 
