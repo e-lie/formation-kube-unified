@@ -95,6 +95,9 @@ async function exportPageToPDF(browser, page, pageInfo, index) {
     // Attendre que le contenu soit chargé
     await page.waitForSelector('main', { timeout: 10000 });
     
+    // Définir la largeur de viewport pour un zoom plus faible (contenu plus petit)
+    await page.setViewport({ width: 1400, height: 1024 });
+    
     // Masquer la sidebar et la navigation pour l'impression
     await page.addStyleTag({
       content: `
@@ -105,14 +108,21 @@ async function exportPageToPDF(browser, page, pageInfo, index) {
           main, article, [class*="content"] { 
             max-width: 100% !important; 
             margin: 0 !important;
-            padding: 20px !important;
+            padding: 10px !important;
           }
+          body {
+            font-size: 11px !important;
+          }
+          h1 { font-size: 20px !important; }
+          h2 { font-size: 18px !important; }
+          h3 { font-size: 16px !important; }
+          h4 { font-size: 14px !important; }
           pre { 
             white-space: pre-wrap !important;
             word-wrap: break-word !important;
           }
           code {
-            font-size: 10px !important;
+            font-size: 9px !important;
           }
         }
       `
@@ -123,10 +133,10 @@ async function exportPageToPDF(browser, page, pageInfo, index) {
       format: 'A4',
       printBackground: true,
       margin: {
-        top: '20mm',
-        right: '15mm',
-        bottom: '20mm',
-        left: '15mm'
+        top: '10mm',
+        right: '8mm',
+        bottom: '10mm',
+        left: '8mm'
       },
       displayHeaderFooter: true,
       headerTemplate: `
