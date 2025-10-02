@@ -9,12 +9,15 @@
     "preview": "astro preview",
     "astro": "astro",
     "sync-docs": "node sync-docs.js",
-    "sync-docs:watch": "node sync-docs.js --watch"
+    "sync-docs:watch": "node sync-docs.js --watch",
+    "export-pdf": "node export-to-pdf.js"
   },
   "dependencies": {
     "@astrojs/starlight": "^0.34.4",
     "astro": "^5.6.1",
     "astro-mermaid": "^1.1.0",
+    "pdf-lib": "^1.17.1",
+    "puppeteer": "^24.23.0",
     "sharp": "^0.34.2"
   },
   "devDependencies": {
