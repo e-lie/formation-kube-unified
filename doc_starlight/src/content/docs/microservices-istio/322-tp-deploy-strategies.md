@@ -111,6 +111,145 @@ Par exemple pour la stratégie **recreate** le graphique donne: ![](/img/prometh
 
 ![](/img/kubernetes/argo-rollout-architecture.webp)
 
+#### **Stratégies de déploiement avancées**
+
+##### **Canary Deployment**
+Avec la stratégie canary, le rollout peut scale un ReplicaSet avec la nouvelle version pour recevoir un pourcentage spécifié de trafic, attendre un temps spécifié, puis revenir au pourcentage 0, et enfin déployer tout le trafic une fois que l'utilisateur est satisfait.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: myapp
+spec:
+  replicas: 5
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20    # 20% du trafic vers canary
+      - pause: {duration: 1m}
+      - setWeight: 40
+      - pause: {duration: 1m}
+      - setWeight: 60
+      - pause: {duration: 1m}
+      - setWeight: 80
+      - pause: {duration: 1m}
+```
+
+##### **Blue-Green Deployment**
+Avec la stratégie BlueGreen, Argo Rollouts permet aux utilisateurs de spécifier un service preview et un service active. Le Rollout configurera le service preview pour envoyer du trafic vers la nouvelle version tandis que le service active continue à recevoir le trafic de production.
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: myapp
+spec:
+  replicas: 3
+  strategy:
+    blueGreen:
+      activeService: myapp-active
+      previewService: myapp-preview
+      autoPromotionEnabled: false
+      scaleDownDelaySeconds: 30
+```
+
+#### **Analyse automatique (Canary Analysis)**
+
+Intégration avec des fournisseurs de métriques pour automatiser les décisions :
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: myapp
+spec:
+  strategy:
+    canary:
+      analysis:
+        templates:
+        - templateName: success-rate
+        startingStep: 2
+        args:
+        - name: service-name
+          value: myapp
+```
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+spec:
+  args:
+  - name: service-name
+  metrics:
+  - name: success-rate
+    interval: 5m
+    successCondition: result[0] >= 0.95
+    failureLimit: 3
+    provider:
+      prometheus:
+        address: http://prometheus:9090
+        query: |
+          sum(rate(
+            http_requests_total{service="{{args.service-name}}",status=~"2.."}[5m]
+          )) / 
+          sum(rate(
+            http_requests_total{service="{{args.service-name}}"}[5m]
+          ))
+```
+
+#### **Intégrations avec Traffic Management**
+
+Argo Rollouts s'intègre (optionnellement) avec les ingress controllers et les service meshes, exploitant leurs capacités de traffic shaping pour progressivement déplacer le trafic vers la nouvelle version pendant une mise à jour.
+
+**Providers supportés :**
+- **Service Meshes** : Istio, Linkerd, AWS App Mesh, SMI
+- **Ingress Controllers** : NGINX, ALB (AWS), Traefik, Ambassador, Apache APISIX
+- **Gateway API** : Support natif pour la nouvelle Gateway API Kubernetes
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: myapp
+spec:
+  strategy:
+    canary:
+      trafficRouting:
+        istio:
+          virtualService:
+            name: myapp-vsvc
+            routes:
+            - primary
+      steps:
+      - setWeight: 10
+      - pause: {duration: 5m}
+```
+
+#### **Rollback automatique**
+
+En cas de problème détecté par l'analyse :
+
+```yaml
+spec:
+  strategy:
+    canary:
+      analysis:
+        templates:
+        - templateName: error-rate
+        startingStep: 1
+      abortScaleDownDelaySeconds: 30  # Garde les pods pour debug
+```
+
+#### Alternatives
+
+- Flagger
+- ?
+
+
+
 ### Facultatif : Installer Istio pour des scénarios plus avancés
 
 Pour des scénarios plus avancés de déploiement, on a besoin d'utiliser soit un _service mesh_ comme Istio (soit un plugin de rollout comme Argo Rollouts mais pas ce que nous proposons ici).
