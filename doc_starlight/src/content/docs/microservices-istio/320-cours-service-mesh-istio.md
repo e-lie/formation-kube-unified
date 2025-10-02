@@ -62,7 +62,7 @@ Il offrent un moyen uniforme et efficace de sécuriser, connecter et surveiller 
 
 ### Istio par l'exemple et autres resources
 
-- https://istiobyexample.dev/
+- [https://istiobyexample.dev/](https://web.archive.org/web/20250128033824/https://istiobyexample.dev/)
 
 - https://www.istioworkshop.io/09-traffic-management/06-circuit-breaker/
 
@@ -84,11 +84,19 @@ Istio utilise plusieurs Custom Resource Definitions (CRDs) pour étendre les fon
 
 ### Istio et API Gateway
 
-Istio soutient la standardisation via la norme API gateway de Kubernetes. Il est donc possible d'utiliser les CRDs de l'api gateway pour configurer le routage du traffic et les points d'entrée du mesh plutôt que les CRDs de Istio.
+Istio soutient la standardisation via la norme API Gateway de Kubernetes. Il est donc possible d'utiliser les CRDs de l'API Gateway pour configurer le routage du trafic et les points d'entrée du mesh plutôt que les CRDs de Istio.
 
-En l'état actuel l'api gateway ne supporte pas tous les cas d'usage de Istio et est moins documenté même si la documentation vous permet de choisir librement la syntaxe istio ou api gateway pour de nombreux cas. Il peut être intéressant de l'utiliser si l'on cherche de la standardisation à long terme
+**Correspondance entre les CRDs Istio et Gateway API :**
 
-Les CRDs de l'API Gateway officiel doivent être installés indépendament de Istio
+| **Istio CRD** | **Gateway API CRD** | **Utilisation** |
+|---------------|---------------------|-----------------|
+| `Gateway` | `Gateway` | Points d'entrée du mesh |
+| `VirtualService` | `HTTPRoute`, `TLSRoute`, `TCPRoute` | Règles de routage L7/L4 |
+| `DestinationRule` | `BackendPolicy` (expérimental) | Politiques de trafic (load balancing, circuit breaker) |
+| `ServiceEntry` | Pas d'équivalent direct | Services externes au cluster |
+| `AuthorizationPolicy` | `SecurityPolicy` (en développement) | Politiques d'autorisation |
+
+> **Note** : L'API Gateway ne supporte pas encore tous les cas d'usage d'Istio. Pour une standardisation à long terme, elle peut être intéressante, mais la documentation reste moins fournie. Les CRDs de l'API Gateway doivent être installés indépendamment d'Istio.
 
 ### Architecture Ambient Mesh (Nouvelle approche)
 
